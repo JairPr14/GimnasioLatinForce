@@ -22,32 +22,96 @@
 
     body { background: var(--lf-bg); color: var(--lf-text); }
 
-    /* Layout */
-    .lf-layout { min-height: 100vh; }
-    .lf-main { background: var(--lf-bg); }
+    /* Layout - footer dinámico, body hace scroll */
+    .lf-layout { min-height: 100vh; display: flex; flex-direction: column; }
+    .lf-layout-row { flex: 1 1 auto; display: flex; min-height: 60vh; }
+    .lf-main { background: var(--lf-bg); flex: 1; min-width: 0; }
+
+    /* Navbar - mismo estilo que sidebar/footer */
+    .lf-navbar{
+        background: linear-gradient(180deg, var(--lf-sidebar) 0%, var(--lf-sidebar-2) 100%);
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 100;
+    }
+    .lf-navbar-left{ display: flex; align-items: center; gap: 12px; }
+    .lf-navbar-right{ display: flex; align-items: center; gap: 8px; }
+    .lf-navbar-brand{ color: #fff; text-decoration: none; }
+    .lf-navbar-brand:hover{ color: #fff; opacity: .95; }
+    .lf-navbar-badge{
+        width: 36px; height: 36px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,193,7,.15);
+        border: 1px solid rgba(255,193,7,.3);
+    }
+    .lf-navbar-brand-text{ font-weight: 800; font-size: 1.05rem; display: block; }
+    .lf-navbar-sub{ font-size: .75rem; color: rgba(255,255,255,.7); }
+    .lf-navbar .btn-outline-secondary,
+    .lf-navbar .btn{
+        border-color: rgba(255,255,255,.35);
+        color: #fff;
+        background: transparent;
+    }
+    .lf-navbar .btn-outline-secondary:hover,
+    .lf-navbar .btn:hover{
+        background: rgba(255,255,255,.15);
+        border-color: rgba(255,255,255,.5);
+        color: #fff;
+    }
+    .lf-navbar .btn-outline-secondary:focus,
+    .lf-navbar .btn:focus{
+        box-shadow: 0 0 0 0.2rem rgba(255,255,255,.25);
+    }
+    .lf-navbar a.btn{ text-decoration: none; }
+    .lf-navbar .btn-sm{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        width: 36px;
+        height: 36px;
+    }
+    .lf-navbar .btn-sm i{
+        font-size: 1.1rem;
+        line-height: 1;
+        vertical-align: middle;
+    }
+    .lf-navbar-user{
+        display: flex; align-items: center; gap: 10px;
+        padding: 6px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.9);
+        font-size: 0.9rem;
+    }
+    .lf-navbar-user .lf-avatar{
+        width: 28px; height: 28px; font-size: 0.8rem;
+    }
 
     /* Sidebar */
     .lf-sidebar{
         width: 252px;
+        flex-shrink: 0;
         background: linear-gradient(180deg, var(--lf-sidebar) 0%, var(--lf-sidebar-2) 100%);
         border-right: 1px solid rgba(255,255,255,.06);
+        transition: width .25s ease;
     }
-    .lf-brand{
-        display:flex; align-items:center; gap:.6rem;
-        padding: 16px 18px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
-        text-decoration:none;
+    .lf-sidebar.collapsed{
+        width: 0;
+        min-width: 0;
+        padding: 0;
+        overflow: hidden;
+        border-right: none;
+        flex-shrink: 0;
     }
-    .lf-brand-badge{
-        width: 36px; height: 36px; border-radius: 12px;
-        display:grid; place-items:center;
-        background: rgba(255,193,7,.12);
-        border: 1px solid rgba(255,193,7,.22);
-    }
-    .lf-brand-title{ color:#fff; font-weight:800; letter-spacing:.2px; }
-    .lf-brand-sub{ color: rgba(255,255,255,.55); font-size:.78rem; margin-top:-2px; }
 
-    .lf-nav{ padding: 10px 10px 14px; }
+    .lf-nav{ padding: 12px 10px 14px; }
     .lf-nav .nav-link{
         display:flex; align-items:center; gap:.65rem;
         color: rgba(255,255,255,.75);
@@ -67,18 +131,21 @@
         border: 1px solid rgba(37,99,235,.18);
         box-shadow: inset 3px 0 0 var(--lf-accent);
     }
+    .lf-nav-section{
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .lf-nav-section:first-of-type{ margin-top: 0; padding-top: 0; border-top: none; }
+    .lf-nav-label{
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .1em;
+        color: rgba(255,255,255,.4);
+        padding: 4px 12px 8px;
+        text-transform: uppercase;
+    }
 
-    .lf-user{
-        padding: 14px 14px 16px;
-        border-top: 1px solid rgba(255,255,255,.08);
-    }
-    .lf-user-card{
-        display:flex; gap:.75rem; align-items:center;
-        padding: 12px 12px;
-        border-radius: 14px;
-        background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.08);
-    }
     .lf-avatar{
         width: 34px; height: 34px; border-radius: 12px;
         display:grid; place-items:center;
@@ -87,27 +154,14 @@
         border: 1px solid rgba(37,99,235,.22);
         font-weight:800;
     }
-    .lf-username{ color: rgba(255,255,255,.9); font-weight:700; line-height:1.05; }
-    .lf-role{ color: rgba(255,255,255,.55); font-size:.78rem; }
-    .lf-logout{
-        margin-top: 10px;
-        border-radius: 12px;
-        padding: 9px 12px;
-        border-color: rgba(255,255,255,.18) !important;
-        color: rgba(255,255,255,.85) !important;
-    }
-    .lf-logout:hover{
-        background: rgba(255,255,255,.08) !important;
-        border-color: rgba(255,255,255,.26) !important;
-        color:#fff !important;
-    }
 
     /* Main container spacing */
     .lf-container{
         padding: 28px 28px;
     }
     @media (max-width: 992px){
-        .lf-sidebar{ width: 230px; }
+        .lf-sidebar:not(.collapsed){ width: 230px; }
+        .lf-sidebar.collapsed{ width: 0; min-width: 0; }
         .lf-container{ padding: 20px 16px; }
     }
 
@@ -294,133 +348,200 @@
     .badge-soft.danger{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.20); color: #991b1b; }
     .badge-soft.info{ background: rgba(59,130,246,.10); border-color: rgba(59,130,246,.18); color: #1d4ed8; }
     .badge-soft.neutral{ background: rgba(148,163,184,.16); border-color: rgba(148,163,184,.24); color: #334155; }
+
 </style>
 {% endblock %}
 
 {% block body %}
-<div class="d-flex lf-layout">
-    <aside class="lf-sidebar flex-shrink-0">
-        <a class="lf-brand" href="{% url 'dashboard:index' %}">
-            <div class="lf-brand-badge">
-                <i class="bi bi-lightning-charge-fill text-warning"></i>
-            </div>
-            <div>
-                <div class="lf-brand-title">LatinForce</div>
-                <div class="lf-brand-sub">Panel administrativo</div>
-            </div>
-        </a>
-        <div class="lf-nav">
-            <ul class="navbar-nav flex-column">
-                    {% has_perm "dashboard.view" as can_dashboard %}
-                    {% if can_dashboard %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'dashboard:index' %}">
-                            <i class="bi bi-grid-1x2 me-2"></i>Dashboard
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        {% has_perm "clientes.view" as can_clientes %}
-                        {% if can_clientes %}
-                        <a class="nav-link {% if '/clientes' in request.path %}active{% endif %}" href="{% url 'clientes:list' %}">
-                            <i class="bi bi-people me-2"></i>Clientes
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "planes.view" as can_planes %}
-                        {% if can_planes %}
-                        <a class="nav-link {% if '/planes' in request.path %}active{% endif %}" href="{% url 'planes:list' %}">
-                            <i class="bi bi-card-list me-2"></i>Planes
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "pagos.view" as can_pagos %}
-                        {% if can_pagos %}
-                        <a class="nav-link {% if '/pagos' in request.path and 'deudas' not in request.path and 'reportes' not in request.path %}active{% endif %}" href="{% url 'pagos:list' %}">
-                            <i class="bi bi-cash me-2"></i>Pagos
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "deudas.view" as can_deudas %}
-                        {% if can_deudas %}
-                        <a class="nav-link {% if 'deudas' in request.path %}active{% endif %}" href="{% url 'pagos:deuda_list' %}">
-                            <i class="bi bi-exclamation-triangle me-2"></i>Deudas
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "reportes.view" as can_reportes %}
-                        {% if can_reportes %}
-                        <a class="nav-link {% if 'reportes' in request.path %}active{% endif %}" href="{% url 'pagos:reportes' %}">
-                            <i class="bi bi-graph-up me-2"></i>Reportes
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "inventario.view" as can_inv %}
-                        {% if can_inv %}
-                        <a class="nav-link {% if '/inventario' in request.path %}active{% endif %}" href="{% url 'inventario:list' %}">
-                            <i class="bi bi-box-seam me-2"></i>Inventario
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "trabajadores.view" as can_trab %}
-                        {% if can_trab %}
-                        <a class="nav-link {% if '/trabajadores' in request.path %}active{% endif %}" href="{% url 'trabajadores:list' %}">
-                            <i class="bi bi-person-workspace me-2"></i>Trabajadores
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "ventas.view" as can_ventas %}
-                        {% if can_ventas %}
-                        <a class="nav-link {% if '/ventas' in request.path %}active{% endif %}" href="{% url 'ventas:list' %}">
-                            <i class="bi bi-cart-check me-2"></i>Ventas
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item mt-2">
-                        <div class="text-uppercase small px-2" style="color: rgba(255,255,255,.45); letter-spacing:.08em;">
-                            Seguridad
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "seguridad.usuarios" as can_sec_users %}
-                        {% if can_sec_users %}
-                        <a class="nav-link {% if '/usuarios/usuarios' in request.path %}active{% endif %}" href="{% url 'usuarios:usuario_list' %}">
-                            <i class="bi bi-person-badge me-2"></i>Usuarios
-                        </a>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        {% has_perm "seguridad.roles" as can_sec_roles %}
-                        {% if can_sec_roles %}
-                        <a class="nav-link {% if '/usuarios/roles' in request.path %}active{% endif %}" href="{% url 'usuarios:rol_list' %}">
-                            <i class="bi bi-shield-lock me-2"></i>Roles
-                        </a>
-                        {% endif %}
-                    </li>
-            </ul>
+<div class="lf-layout">
+    <nav class="lf-navbar">
+        <div class="lf-navbar-left">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="lf-sidebar-toggle" aria-label="Menú">
+                <i class="bi bi-layout-sidebar-inset"></i>
+            </button>
+            <a href="{% url 'dashboard:index' %}" class="lf-navbar-brand d-flex align-items-center gap-2">
+                <span class="lf-navbar-badge"><i class="bi bi-lightning-charge-fill text-warning"></i></span>
+                <span>
+                    <span class="d-block lf-navbar-brand-text">LatinForce</span>
+                    <span class="lf-navbar-sub">{% block navbar_title %}Panel administrativo{% endblock %}</span>
+                </span>
+            </a>
         </div>
-        <div class="lf-user mt-auto">
-            <div class="lf-user-card">
+        <div class="lf-navbar-right">
+            <div class="lf-navbar-user">
                 <div class="lf-avatar">{{ user.get_username|default:"U"|slice:":1"|upper }}</div>
-                <div class="flex-grow-1">
-                    <div class="lf-username">{{ user.get_username }}</div>
-                    <div class="lf-role">Sesión activa</div>
+                <div>
+                    <div class="fw-semibold">{{ user.get_username }}</div>
+                    <small class="text-white-50">Sesión activa</small>
                 </div>
             </div>
-            <a href="{% url 'usuarios:logout' %}" class="btn btn-outline-secondary btn-sm w-100 lf-logout">
-                <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+            {% has_perm "seguridad.usuarios" as can_config %}
+            {% if can_config %}
+            <a href="{% url 'usuarios:usuario_update' user.pk %}" class="btn btn-outline-secondary btn-sm" title="Configuración">
+                <i class="bi bi-gear-fill"></i>
             </a>
+            {% endif %}
+            <a href="{% url 'usuarios:logout' %}" class="btn btn-outline-secondary btn-sm" title="Cerrar sesión">
+                <i class="bi bi-power"></i>
+            </a>
+        </div>
+    </nav>
+    <div class="d-flex lf-layout-row">
+    <aside class="lf-sidebar" id="lf-sidebar">
+        <div class="lf-nav">
+            <ul class="navbar-nav flex-column">
+                {% has_perm "dashboard.view" as can_dashboard %}
+                {% if can_dashboard %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+                        <i class="bi bi-house-door"></i>Dashboard
+                    </a>
+                </li>
+                {% endif %}
+
+                {# Operaciones — acciones del día a día #}
+                {% has_perm "asistencia.create" as can_asistencia %}
+                {% has_perm "trabajadores.asistencia.create" as can_asist_trab %}
+                {% if can_asistencia or can_asist_trab %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Operaciones</div>
+                </li>
+                {% if can_asistencia %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/clientes' in request.path and 'asistencia' in request.path %}active{% endif %}" href="{% url 'clientes:asistencia_rapido' %}">
+                        <i class="bi bi-person-check"></i>Registro clientes
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_asist_trab %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/trabajadores' in request.path and 'asistencia' in request.path %}active{% endif %}" href="{% url 'trabajadores:asistencia_rapido' %}">
+                        <i class="bi bi-clipboard-check"></i>Asistencia personal
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                {# Membresías #}
+                {% has_perm "clientes.view" as can_clientes %}
+                {% has_perm "planes.view" as can_planes %}
+                {% has_perm "pagos.view" as can_pagos %}
+                {% has_perm "deudas.view" as can_deudas %}
+                {% if can_clientes or can_planes or can_pagos or can_deudas %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Membresías</div>
+                </li>
+                {% if can_clientes %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/clientes' in request.path and 'asistencia' not in request.path %}active{% endif %}" href="{% url 'clientes:list' %}">
+                        <i class="bi bi-people"></i>Clientes
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_planes %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/planes' in request.path %}active{% endif %}" href="{% url 'planes:list' %}">
+                        <i class="bi bi-card-list"></i>Planes
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_pagos %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/pagos' in request.path and 'deudas' not in request.path and 'reportes' not in request.path %}active{% endif %}" href="{% url 'pagos:list' %}">
+                        <i class="bi bi-cash-coin"></i>Pagos
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_deudas %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'deudas' in request.path %}active{% endif %}" href="{% url 'pagos:deuda_list' %}">
+                        <i class="bi bi-exclamation-triangle"></i>Deudas
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                {# Finanzas #}
+                {% has_perm "reportes.view" as can_reportes %}
+                {% if can_reportes %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Finanzas</div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'reportes' in request.path %}active{% endif %}" href="{% url 'pagos:reportes' %}">
+                        <i class="bi bi-graph-up-arrow"></i>Reportes
+                    </a>
+                </li>
+                {% endif %}
+
+                {# Tienda #}
+                {% has_perm "inventario.view" as can_inv %}
+                {% has_perm "ventas.view" as can_ventas %}
+                {% if can_inv or can_ventas %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Tienda</div>
+                </li>
+                {% if can_inv %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/inventario' in request.path %}active{% endif %}" href="{% url 'inventario:list' %}">
+                        <i class="bi bi-box-seam"></i>Inventario
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_ventas %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/ventas' in request.path %}active{% endif %}" href="{% url 'ventas:list' %}">
+                        <i class="bi bi-cart-check"></i>Ventas
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                {# Personal #}
+                {% has_perm "trabajadores.view" as can_trab %}
+                {% if can_trab %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Personal</div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/trabajadores' in request.path and 'asistencia' not in request.path %}active{% endif %}" href="{% url 'trabajadores:list' %}">
+                        <i class="bi bi-person-workspace"></i>Trabajadores
+                    </a>
+                </li>
+                {% endif %}
+
+                {# Sistema #}
+                {% has_perm "seguridad.usuarios" as can_sec_users %}
+                {% has_perm "seguridad.roles" as can_sec_roles %}
+                {% if can_sec_users or can_sec_roles %}
+                <li class="lf-nav-section">
+                    <div class="lf-nav-label">Sistema</div>
+                </li>
+                {% if can_sec_users %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/usuarios/usuarios' in request.path %}active{% endif %}" href="{% url 'usuarios:usuario_list' %}">
+                        <i class="bi bi-person-badge"></i>Usuarios
+                    </a>
+                </li>
+                {% endif %}
+                {% if can_sec_roles %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/usuarios/roles' in request.path %}active{% endif %}" href="{% url 'usuarios:rol_list' %}">
+                        <i class="bi bi-shield-lock"></i>Roles
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'configuracion' in request.path %}active{% endif %}" href="{% url 'core:configuracion_empresa' %}">
+                        <i class="bi bi-gear"></i>Configuración
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
         </div>
     </aside>
 
-    <main class="flex-grow-1 overflow-auto lf-main">
+    <main class="flex-grow-1 lf-main">
         <div class="lf-container">
         {% if messages %}
         {% for message in messages %}
@@ -434,5 +555,24 @@
         {% block content %}{% endblock %}
         </div>
     </main>
+    </div>
 </div>
+<script>
+(function(){
+    var sidebar = document.getElementById('lf-sidebar');
+    var toggle = document.getElementById('lf-sidebar-toggle');
+    var icon = toggle ? toggle.querySelector('i') : null;
+    var key = 'lf-sidebar-collapsed';
+    function apply(state) {
+        if (state) { sidebar.classList.add('collapsed'); if (icon) icon.className = 'bi bi-layout-sidebar-inset'; }
+        else { sidebar.classList.remove('collapsed'); if (icon) icon.className = 'bi bi-x-lg'; }
+        try { localStorage.setItem(key, state ? '1' : '0'); } catch(e){}
+    }
+    if (toggle && sidebar) {
+        var saved = localStorage.getItem(key);
+        if (saved === '1') apply(true);
+        toggle.addEventListener('click', function(){ apply(sidebar.classList.toggle('collapsed')); });
+    }
+})();
+</script>
 {% endblock %}

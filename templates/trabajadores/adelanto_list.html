@@ -1,0 +1,50 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Adelantos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Adelantos de {{ trabajador.nombre_completo }}</h1>
+    <div class="text-muted">Total adelantos: <strong>S/ {{ total_adelantos }}</strong> · Se descontará de una o ambas quincenas</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'trabajadores:adelanto_create' trabajador.pk %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Registrar adelanto
+    </a>
+    <a href="{% url 'trabajadores:detail' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Descontar de</th>
+          <th>Mes ref.</th>
+          <th>Observaciones</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in adelantos %}
+        <tr>
+          <td>{{ a.fecha|date:"d/m/Y" }}</td>
+          <td class="fw-semibold">S/ {{ a.monto }}</td>
+          <td><span class="badge-soft info">{{ a.get_descontar_de_display }}</span></td>
+          <td>{% if a.mes_ref %}{{ a.mes_ref }}/{{ a.anio_ref }}{% else %}—{% endif %}</td>
+          <td>{{ a.observaciones|truncatewords:8|default:"—" }}</td>
+          <td>
+            <a href="{% url 'trabajadores:adelanto_delete' trabajador.pk a.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">No hay adelantos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

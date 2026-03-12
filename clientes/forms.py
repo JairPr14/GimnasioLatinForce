@@ -45,3 +45,17 @@ class ClienteForm(forms.ModelForm):
                 'placeholder': 'Restricciones físicas, alergias, condiciones médicas...'
             }),
         }
+
+
+class AsistenciaRegistroForm(forms.Form):
+    """Formulario para buscar cliente por DNI y registrar asistencia."""
+    dni = forms.CharField(
+        max_length=20,
+        label='Número de DNI',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'Introduce número de DNI',
+            'autofocus': True,
+            'autocomplete': 'off',
+        })
+    )

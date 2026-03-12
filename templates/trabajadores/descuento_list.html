@@ -1,0 +1,50 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Descuentos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Descuentos de {{ trabajador.nombre_completo }}</h1>
+    <div class="text-muted">Total descuentos: <strong>S/ {{ total_descuentos }}</strong> · Tardanzas, AFP, ONP, incumplimientos</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'trabajadores:descuento_create' trabajador.pk %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Registrar descuento
+    </a>
+    <a href="{% url 'trabajadores:detail' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Tipo</th>
+          <th>Periodo</th>
+          <th>Mes ref.</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in descuentos %}
+        <tr>
+          <td>{{ d.fecha|date:"d/m/Y" }}</td>
+          <td class="fw-semibold">S/ {{ d.monto }}</td>
+          <td><span class="badge-soft {% if d.tipo == 'afp' or d.tipo == 'onp' %}info{% else %}warning{% endif %}">{{ d.get_tipo_display }}</span></td>
+          <td>{{ d.get_periodo_referencia_display }}</td>
+          <td>{% if d.mes_ref %}{{ d.mes_ref }}/{{ d.anio_ref }}{% else %}—{% endif %}</td>
+          <td>
+            <a href="{% url 'trabajadores:descuento_delete' trabajador.pk d.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="bi bi-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">No hay descuentos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

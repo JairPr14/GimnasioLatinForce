@@ -20,6 +20,8 @@ PERMISOS: List[PermisoDef] = [
     PermisoDef("clientes.create", "Crear clientes", "Clientes"),
     PermisoDef("clientes.update", "Editar clientes", "Clientes"),
     PermisoDef("clientes.delete", "Eliminar clientes", "Clientes"),
+    PermisoDef("asistencia.view", "Ver asistencias", "Asistencia"),
+    PermisoDef("asistencia.create", "Registrar asistencia (ingreso/egreso)", "Asistencia"),
 
     # Planes
     PermisoDef("planes.view", "Ver planes", "Planes"),
@@ -58,6 +60,8 @@ PERMISOS: List[PermisoDef] = [
     PermisoDef("trabajadores.sueldos.view", "Ver historial de sueldos", "Trabajadores"),
     PermisoDef("trabajadores.sueldos.create", "Actualizar/registrar sueldos", "Trabajadores"),
     PermisoDef("trabajadores.reportes.view", "Ver reportes de pagos a trabajadores", "Trabajadores"),
+    PermisoDef("trabajadores.asistencia.view", "Ver asistencias de personal", "Trabajadores"),
+    PermisoDef("trabajadores.asistencia.create", "Registrar ingreso/salida de personal", "Trabajadores"),
 
     # Ventas
     PermisoDef("ventas.view", "Ver ventas", "Ventas"),

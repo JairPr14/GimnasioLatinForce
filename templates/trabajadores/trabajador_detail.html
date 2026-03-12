@@ -1,5 +1,5 @@
 {% extends "base_dashboard.html" %}
-{% block page_title %}Trabajador{% endblock %}
+{% block page_title %}{{ trabajador.nombre_completo }}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
@@ -14,6 +14,15 @@
     <a href="{% url 'trabajadores:sueldo_list' trabajador.pk %}" class="btn btn-outline-primary">
       <i class="bi bi-wallet2 me-1"></i>Sueldos
     </a>
+    <a href="{% url 'trabajadores:asistencia_trabajador_list' trabajador.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-clock-history me-1"></i>Asistencia
+    </a>
+    <a href="{% url 'trabajadores:adelanto_list' trabajador.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-arrow-up-circle me-1"></i>Adelantos
+    </a>
+    <a href="{% url 'trabajadores:descuento_list' trabajador.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-dash-circle me-1"></i>Descuentos
+    </a>
     <a href="{% url 'trabajadores:update' trabajador.pk %}" class="btn btn-outline-secondary">
       <i class="bi bi-pencil me-1"></i>Editar
     </a>
@@ -21,22 +30,59 @@
   </div>
 </div>
 
+{% if total_quincenas_pendientes > 0 %}
+<div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+  <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+  <div>
+    <strong>{% if total_quincenas_pendientes == 1 %}Se debe 1 quincena{% else %}Se deben {{ total_quincenas_pendientes }} quincenas{% endif %}</strong>
+    — Registrar el pago pendiente en <a href="{% url 'trabajadores:pago_create' trabajador.pk %}" class="alert-link">Registrar pago</a>
+  </div>
+</div>
+{% endif %}
+
+{% if quincenas_pendientes %}
+<div class="card lf-card mb-3">
+  <div class="card-header fw-semibold">Estado de pagos por mes</div>
+  <div class="card-body py-2">
+    <p class="text-muted small mb-2">El mes se considera completo cuando ambas quincenas están pagadas. Un pago de <strong>mes completo</strong> cuenta como 2 quincenas.</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% for q in quincenas_pendientes %}
+      {% if q.pendientes %}
+      <span class="badge bg-warning text-dark d-inline-flex align-items-center">
+        <i class="bi bi-exclamation-circle me-1"></i>{{ q.label }}: hay {{ q.pendientes|length }} quincena(s) pendiente(s) — {{ q.pendientes|join:", " }}
+      </span>
+      {% else %}
+      <span class="badge bg-success d-inline-flex align-items-center">
+        <i class="bi bi-check-circle me-1"></i>{{ q.label }}: mes completo pagado
+      </span>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="row g-3">
   <div class="col-lg-6">
     <div class="card lf-card">
       <div class="card-body">
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-between align-items-start">
           <div>
             <div class="text-muted small">Sueldo mensual</div>
-            <div class="fw-bold fs-4">S/ {{ trabajador.sueldo_mensual }}</div>
+            <div class="fw-bold fs-4">S/ {{ trabajador.sueldo_mensual|floatformat:2 }}</div>
+            <div class="text-muted small mt-1">Pago: {{ trabajador.get_periodo_pago_display }} · Ingreso: {{ trabajador.fecha_ingreso|date:"d/m/Y"|default:"—" }}</div>
           </div>
           <div class="text-end">
             {% if trabajador.estado == 'activo' %}
-              <span class="badge-soft success">Activo</span>
+              <span class="badge bg-success">Activo</span>
             {% else %}
-              <span class="badge-soft neutral">Inactivo</span>
+              <span class="badge bg-secondary">Inactivo</span>
             {% endif %}
-            <div class="text-muted small mt-2">Ingreso: {{ trabajador.fecha_ingreso|date:"d/m/Y"|default:"—" }}</div>
+            {% if total_quincenas_pendientes > 0 %}
+            <div class="mt-2">
+              <span class="badge bg-warning text-dark">Pend. {{ total_quincenas_pendientes }} quincena{{ total_quincenas_pendientes|pluralize }}</span>
+            </div>
+            {% endif %}
           </div>
         </div>
         <hr>
@@ -51,23 +97,42 @@
   </div>
   <div class="col-lg-6">
     <div class="card lf-card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="fw-semibold">Pagos recientes</div>
-        <div class="text-muted small">Total pagado: <strong>S/ {{ total_pagado }}</strong></div>
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="fw-semibold">Historial de pagos</div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Total: <strong>S/ {{ total_pagado }}</strong></span>
+          <a href="{% url 'trabajadores:pago_create' trabajador.pk %}" class="btn btn-sm btn-primary">Registrar pago</a>
+          <a href="{% url 'trabajadores:pago_list' trabajador.pk %}" class="btn btn-sm btn-outline-secondary">Ver todo</a>
+        </div>
       </div>
       <div class="card-body p-0">
-        <div class="list-group list-group-flush">
-          {% for p in pagos_recientes %}
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <div class="fw-semibold">S/ {{ p.monto }} <span class="text-muted small">· {{ p.get_metodo_pago_display }}</span></div>
-                <div class="text-muted small">{{ p.fecha_pago|date:"d/m/Y" }} · {{ p.concepto|default:"Pago" }}</div>
-              </div>
-              <div class="text-muted small">{{ p.numero_comprobante|default:"—" }}</div>
-            </div>
-          {% empty %}
-            <div class="list-group-item text-muted">Aún no hay pagos registrados.</div>
-          {% endfor %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle lf-table mb-0">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Periodo</th>
+                <th>Monto</th>
+                <th>Método</th>
+                <th>Comprobante</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in pagos_recientes %}
+              <tr>
+                <td>{{ p.fecha_pago|date:"d/m/Y" }}</td>
+                <td><span class="badge-soft info">{{ p.get_periodo_referencia_display }}</span></td>
+                <td class="fw-semibold">S/ {{ p.monto }}</td>
+                <td class="text-muted small">{{ p.get_metodo_pago_display }}</td>
+                <td>
+                  <a href="{% url 'trabajadores:pago_comprobante' trabajador.pk p.pk %}">{{ p.numero_comprobante|default:"—" }}</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-4">Aún no hay pagos registrados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -75,7 +140,37 @@
 </div>
 
 <div class="row g-3 mt-0">
-  <div class="col-lg-12">
+  <div class="col-lg-6">
+    <div class="card lf-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-semibold">Asistencia (reciente)</div>
+        <a href="{% url 'trabajadores:asistencia_trabajador_list' trabajador.pk %}" class="btn btn-sm btn-outline-primary">Ver todo</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle lf-table mb-0">
+            <thead>
+              <tr>
+                <th>Ingreso</th>
+                <th>Término</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in asistencias_recientes %}
+              <tr>
+                <td>{{ a.fecha_hora_ingreso|date:"d/m/Y H:i" }}</td>
+                <td>{% if a.fecha_hora_termino %}{{ a.fecha_hora_termino|date:"d/m/Y H:i" }}{% else %}<span class="badge-soft success">En curso</span>{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="2" class="text-center text-muted py-3">Sin registros.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
     <div class="card lf-card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <div class="fw-semibold">Historial de sueldos (reciente)</div>
@@ -104,6 +199,83 @@
               </tr>
               {% empty %}
               <tr><td colspan="4" class="text-center text-muted py-4">Aún no hay historial. Registra el primer sueldo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-0">
+  <div class="col-lg-6">
+    <div class="card lf-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-semibold">Adelantos (reciente)</div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Total: <strong>S/ {{ total_adelantos }}</strong></span>
+          <a href="{% url 'trabajadores:adelanto_create' trabajador.pk %}" class="btn btn-sm btn-outline-primary">Registrar</a>
+          <a href="{% url 'trabajadores:adelanto_list' trabajador.pk %}" class="btn btn-sm btn-outline-secondary">Ver todo</a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle lf-table mb-0">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Descontar de</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in adelantos_recientes %}
+              <tr>
+                <td>{{ a.fecha|date:"d/m/Y" }}</td>
+                <td class="fw-semibold">S/ {{ a.monto }}</td>
+                <td><span class="badge-soft info">{{ a.get_descontar_de_display }}</span></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3" class="text-center text-muted py-3">Sin adelantos.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card lf-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-semibold">Descuentos (reciente)</div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Total: <strong>S/ {{ total_descuentos }}</strong></span>
+          <a href="{% url 'trabajadores:descuento_create' trabajador.pk %}" class="btn btn-sm btn-outline-primary">Registrar</a>
+          <a href="{% url 'trabajadores:descuento_list' trabajador.pk %}" class="btn btn-sm btn-outline-secondary">Ver todo</a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle lf-table mb-0">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Tipo</th>
+                <th>Periodo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in descuentos_recientes %}
+              <tr>
+                <td>{{ d.fecha|date:"d/m/Y" }}</td>
+                <td class="fw-semibold">S/ {{ d.monto }}</td>
+                <td><span class="badge-soft {% if d.tipo == 'afp' or d.tipo == 'onp' %}info{% else %}warning{% endif %}">{{ d.get_tipo_display }}</span></td>
+                <td>{{ d.get_periodo_referencia_display }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-3">Sin descuentos.</td></tr>
               {% endfor %}
             </tbody>
           </table>

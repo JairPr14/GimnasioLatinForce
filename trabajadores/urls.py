@@ -20,6 +20,19 @@ urlpatterns = [
     path("<int:trabajador_id>/sueldos/", views.SueldoHistorialListView.as_view(), name="sueldo_list"),
     path("<int:trabajador_id>/sueldos/nuevo/", views.SueldoHistorialCreateView.as_view(), name="sueldo_create"),
 
+    path("<int:trabajador_id>/adelantos/", views.AdelantoTrabajadorListView.as_view(), name="adelanto_list"),
+    path("<int:trabajador_id>/adelantos/nuevo/", views.AdelantoTrabajadorCreateView.as_view(), name="adelanto_create"),
+    path("<int:trabajador_id>/adelantos/<int:pk>/eliminar/", views.AdelantoTrabajadorDeleteView.as_view(), name="adelanto_delete"),
+
+    path("<int:trabajador_id>/descuentos/", views.DescuentoTrabajadorListView.as_view(), name="descuento_list"),
+    path("<int:trabajador_id>/descuentos/nuevo/", views.DescuentoTrabajadorCreateView.as_view(), name="descuento_create"),
+    path("<int:trabajador_id>/descuentos/<int:pk>/eliminar/", views.DescuentoTrabajadorDeleteView.as_view(), name="descuento_delete"),
+
     path("reportes/pagos/", views.ReportePagosTrabajadoresView.as_view(), name="reporte_pagos"),
+
+    path("asistencia/", views.AsistenciaTrabajadorListView.as_view(), name="asistencia_list"),
+    path("asistencia/rapido/", views.AsistenciaTrabajadorRegistroRapidoView.as_view(), name="asistencia_rapido"),
+    path("<int:trabajador_id>/asistencia/", views.AsistenciaTrabajadorTrabajadorListView.as_view(), name="asistencia_trabajador_list"),
+    path("asistencia/<int:pk>/editar/", views.AsistenciaTrabajadorUpdateView.as_view(), name="asistencia_edit"),
 ]
 

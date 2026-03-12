@@ -32,7 +32,7 @@ class PagoForm(forms.ModelForm):
         self.fields['cliente'].queryset = Cliente.objects.filter(estado__in=('activo', 'suspendido'))
         from planes.models import Plan
         self.fields['plan'].queryset = Plan.objects.filter(activo=True)
-        self.fields['plan'].label_from_instance = lambda p: f"{p.nombre} ({p.get_tipo_periodo_display}) - S/ {p.precio}"
+        self.fields['plan'].label_from_instance = lambda p: f"{p.nombre} ({p.get_tipo_periodo_display()}) - S/ {p.precio}"
         self.fields['plan'].required = False
         self.fields['deuda'].required = False
         from django.db.models import Sum, F, Value, DecimalField

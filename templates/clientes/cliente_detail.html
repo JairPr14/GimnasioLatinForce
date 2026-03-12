@@ -5,6 +5,12 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">{{ cliente.nombre_completo }}</h1>
     <div class="btn-group">
+        <a href="{% url 'clientes:asistencia_list' cliente.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-clock-history me-1"></i>Asistencia
+        </a>
+        <a href="{% url 'clientes:asistencia_rapido' %}?dni={{ cliente.dni }}" class="btn btn-outline-success">
+            <i class="bi bi-plus-circle me-1"></i>Registrar asistencia
+        </a>
         <a href="{% url 'pagos:historial_cliente' cliente.pk %}" class="btn btn-primary">
             <i class="bi bi-cash me-1"></i>Historial pagos
         </a>
@@ -82,6 +88,67 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Listado de asistencia</h6>
+                <a href="{% url 'clientes:asistencia_list' cliente.pk %}" class="btn btn-sm btn-outline-primary">Ver todo</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table lf-table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora ingreso</th>
+                                <th>Hora egreso</th>
+                                <th>Invitado(s) del día</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in asistencias %}
+                            <tr>
+                                <td>{{ a.fecha_hora_ingreso|date:"d/m/Y" }}</td>
+                                <td>{{ a.fecha_hora_ingreso|date:"H:i" }}</td>
+                                <td>
+                                    {% if a.hora_egreso_efectiva %}
+                                    {{ a.hora_egreso_efectiva|date:"H:i" }}
+                                    {% if not a.fecha_hora_egreso %}
+                                    <span class="badge bg-secondary ms-1">auto</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if a.invitados.exists %}
+                                    {% for inv in a.invitados.all %}
+                                    <span class="d-inline-block mb-1">{{ inv.nombre }}{% if inv.documento %} <small class="text-muted">(DNI: {{ inv.documento }})</small>{% endif %}</span>{% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if a.cerrada %}
+                                    <span class="badge bg-success">Cerrada</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark">En curso</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">No hay registros de asistencia.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         {% if cliente.observaciones_medicas %}
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">

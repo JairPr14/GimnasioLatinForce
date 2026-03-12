@@ -30,6 +30,7 @@
                 <div class="col-md-3">
                     <label class="form-label">Fecha de emisión</label>
                     {{ form.fecha_pago }}
+                    <small class="text-muted d-block">El periodo del plan inicia desde esta fecha</small>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Método de pago</label>
@@ -77,6 +78,8 @@
 
 <script>
 (function() {
+    const planesPrecios = {{ planes_precios_json|safe }};
+    const planesNombres = {{ planes_nombres_json|safe }};
 
     const planSelect = document.getElementById('id_plan');
     const montoInput = document.getElementById('id_monto');

@@ -8,4 +8,5 @@ app_name = 'dashboard'
 
 urlpatterns = [
     path('', views.DashboardView.as_view(), name='index'),
+    path('api/live/', views.DashboardAPIView.as_view(), name='api_live'),
 ]

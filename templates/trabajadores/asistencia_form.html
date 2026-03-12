@@ -1,0 +1,30 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Editar asistencia{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <h1 class="h3 mb-1">Editar asistencia</h1>
+  <a href="{% url 'trabajadores:asistencia_list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card lf-card" style="max-width: 500px;">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <div class="invalid-feedback d-block">{{ field.errors.0 }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a class="btn btn-outline-secondary" href="{% url 'trabajadores:asistencia_list' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

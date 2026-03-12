@@ -5,23 +5,62 @@
 <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
   <div>
     <h1 class="h3 mb-1">{% if pago %}Editar pago{% else %}Registrar pago{% endif %}</h1>
-    <div class="text-muted">{{ trabajador.nombre_completo }}</div>
+    <div class="text-muted">{{ trabajador.nombre_completo }} · Pago {{ trabajador.get_periodo_pago_display|lower }}</div>
   </div>
   <a href="{% url 'trabajadores:pago_list' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
 </div>
+
+{% if trabajador.periodo_pago == "quincenal" and quincenas_pendientes %}
+<div class="alert alert-info mb-3">
+  <strong>Quincenas pendientes:</strong> El mes se considera pagado solo cuando ambas quincenas estén registradas.
+  <ul class="mb-0 mt-2">
+    {% for q in quincenas_pendientes %}
+    <li>
+      <strong>{{ q.label }}</strong>:
+      {% if q.pendientes %}
+        Pendiente: {{ q.pendientes|join:", " }}
+      {% else %}
+        <span class="text-success">✓ Mes completo pagado</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 
 <div class="card lf-card">
   <div class="card-body">
     <form method="post">
       {% csrf_token %}
       <div class="row g-3">
+        {% if form.mes_a_pagar %}
+        <div class="col-md-4">
+          <label class="form-label">Mes a pagar</label>
+          {{ form.mes_a_pagar }}
+          <div class="form-text">Seleccione el mes pendiente de pago.</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Periodo (quincena o mes completo)</label>
+          {{ form.periodo_referencia }}
+        </div>
+        {% else %}
         <div class="col-md-3">
-          <label class="form-label">Fecha</label>
+          <label class="form-label">Fecha de pago</label>
           {{ form.fecha_pago }}
         </div>
         <div class="col-md-3">
+          <label class="form-label">Periodo referido</label>
+          {{ form.periodo_referencia }}
+        </div>
+        {% endif %}
+        <div class="col-md-3">
           <label class="form-label">Monto</label>
           {{ form.monto }}
+          {% if trabajador.periodo_pago == "quincenal" %}
+          <div class="form-text">Por quincena (mitad del sueldo mensual)</div>
+          {% else %}
+          <div class="form-text">Sueldo mensual completo</div>
+          {% endif %}
         </div>
         <div class="col-md-3">
           <label class="form-label">Método</label>
@@ -47,5 +86,22 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var sel = document.getElementById('id_periodo_referencia');
+  var monto = document.getElementById('id_monto');
+  if (!sel || !monto) return;
+  var sueldoMensual = parseFloat('{{ trabajador.sueldo_mensual|default:"0"|floatformat:2 }}'.replace(',','.')) || 0;
+  var sueldoQuincena = parseFloat((sueldoMensual / 2).toFixed(2));
+  sel.addEventListener('change', function() {
+    var v = this.value;
+    if (v === 'mes') monto.value = sueldoMensual;
+    else if (v === 'quincena_1' || v === 'quincena_2') monto.value = sueldoQuincena;
+  });
+})();
+</script>
 {% endblock %}
 

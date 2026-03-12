@@ -1,0 +1,15 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Eliminar descuento{% endblock %}
+{% block content %}
+<div class="card lf-card" style="max-width: 480px;">
+  <div class="card-body">
+    <h2 class="h5 mb-3">¿Eliminar descuento?</h2>
+    <p class="text-muted">S/ {{ object.monto }} — {{ object.get_tipo_display }} ({{ object.fecha|date:"d/m/Y" }})</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Eliminar</button>
+      <a href="{% url 'trabajadores:descuento_list' object.trabajador_id %}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

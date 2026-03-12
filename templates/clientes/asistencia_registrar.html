@@ -1,0 +1,113 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Registrar Asistencia{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Registrar asistencia</h1>
+    <a href="{% url 'clientes:list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_dni" class="form-label fw-semibold">Introduce número de DNI</label>
+                        <div class="input-group">
+                            {{ form.dni }}
+                            <button type="submit" name="buscar" class="btn btn-primary">
+                                <i class="bi bi-search me-1"></i>Buscar
+                            </button>
+                        </div>
+                        {% if form.dni.errors %}
+                        <div class="invalid-feedback d-block">{{ form.dni.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </form>
+
+                {% if cliente %}
+                <div class="border rounded p-4 mb-4 bg-light">
+                    <h6 class="text-muted mb-2">Datos del cliente</h6>
+                    <p class="h5 mb-0">{{ cliente.nombre_completo }}</p>
+                    <p class="mb-0 small text-muted">DNI: {{ cliente.dni }} · {{ cliente.estado|title }}</p>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <i class="bi bi-clock text-primary fs-4"></i>
+                    <div>
+                        <span class="text-muted small">Hora de ingreso</span>
+                        <p class="mb-0 fw-semibold">{% now "d/m/Y H:i" %}</p>
+                    </div>
+                </div>
+
+                <form method="post" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="dni" value="{{ form.dni.value|default:cliente.dni }}">
+                    {% if tiene_ingreso_abierto %}
+                    <div class="alert alert-warning mb-3">
+                        <strong>El paciente ya está dentro de su jornada de ingreso.</strong>
+                        <p class="mb-0 small mt-1">No puede aperturar otra jornada. Se cerrará automáticamente a la 1h 30min o puede cerrarla manualmente.</p>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button type="submit" name="accion" value="marcar_egreso" class="btn btn-warning">
+                            <i class="bi bi-box-arrow-right me-1"></i>Cerrar jornada
+                        </button>
+                        <span class="small text-muted">Ingreso: {{ ultima_asistencia.fecha_hora_ingreso|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% elif not tiene_plan_activo %}
+                    <div class="alert alert-warning mb-0">
+                        <strong>Cliente sin plan activo.</strong> Regístrelo en un plan o venda entrada por rutina.
+                    </div>
+                    {% if ultimo_plan %}
+                    <div class="mb-3 p-3 rounded bg-light border">
+                        <p class="mb-1 small text-muted">Último plan:</p>
+                        <p class="mb-0 fw-semibold">{{ ultimo_plan.plan.nombre }} ({{ ultimo_plan.plan.get_tipo_periodo_display }}) — S/ {{ ultimo_plan.plan.precio }}</p>
+                        {% if fecha_vencimiento_plan %}<p class="mb-0 small text-muted">Venció: {{ fecha_vencimiento_plan|date:"d/m/Y" }}</p>{% endif %}
+                        <p class="mb-0 small text-info mt-1"><i class="bi bi-info-circle me-1"></i>El nuevo periodo inicia desde la fecha de pago. Puedes cambiar el plan en el formulario.</p>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'pagos:create' %}?cliente={{ cliente.pk }}{% if ultimo_plan %}&plan={{ ultimo_plan.plan.pk }}{% endif %}" class="btn btn-primary">
+                            <i class="bi bi-credit-card me-1"></i>Registrar en plan{% if ultimo_plan %} ({{ ultimo_plan.plan.nombre }}){% endif %}
+                        </a>
+                        <button type="submit" name="accion" value="registrar_rutina" class="btn btn-success">
+                            <i class="bi bi-cash me-1"></i>Registrar rutina (S/ 5)
+                        </button>
+                    </div>
+                    {% elif preguntar_invitado %}
+                    <div class="alert alert-success mb-3">
+                        <strong>Ingreso registrado.</strong> Puede traer hasta 3 invitados por mes.
+                    </div>
+                    <p class="mb-2">¿Registrar invitado en esta jornada? ({{ invitados_restantes }} restantes este mes)</p>
+                    <form method="post" class="d-flex flex-column gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="dni" value="{{ form.dni.value|default:cliente.dni }}">
+                        <input type="hidden" name="asistencia_id" value="{{ ultima_asistencia.pk }}">
+                        <input type="text" name="invitado_nombre" class="form-control" placeholder="Nombre del invitado" maxlength="120">
+                        <input type="text" name="invitado_documento" class="form-control" placeholder="DNI (opcional)" maxlength="20">
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="accion" value="registrar_invitado" class="btn btn-primary">
+                                <i class="bi bi-person-plus me-1"></i>Registrar invitado
+                            </button>
+                            <a href="{% url 'clientes:asistencia_registrar' %}" class="btn btn-outline-secondary">Omitir</a>
+                        </div>
+                    </form>
+                    {% else %}
+                    <button type="submit" name="accion" value="registrar_ingreso" class="btn btn-success align-self-start">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Registrar ingreso
+                    </button>
+                    {% endif %}
+                </form>
+
+                {% elif form.dni.value and form.is_valid %}
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>No se encontró cliente con DNI "{{ form.dni.value }}".
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

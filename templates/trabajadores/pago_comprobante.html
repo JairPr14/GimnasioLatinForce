@@ -49,7 +49,8 @@
                 <a href="{% url 'trabajadores:pago_comprobante_pdf' pago.trabajador_id pago.pk %}" class="btn btn-outline-primary">
                     <i class="bi bi-file-earmark-pdf"></i> PDF 80mm
                 </a>
-                <a href="{% url 'trabajadores:pago_list' pago.trabajador_id %}" class="btn btn-outline-secondary">Volver</a>
+                <a href="{% url 'trabajadores:detail' pago.trabajador_id %}" class="btn btn-outline-success">Ver trabajador</a>
+                <a href="{% url 'trabajadores:pago_list' pago.trabajador_id %}" class="btn btn-outline-secondary">Ver pagos</a>
             </div>
         </div>
     </div>

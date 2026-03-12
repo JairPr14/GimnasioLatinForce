@@ -1,0 +1,84 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Registrar descuento{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Registrar descuento</h1>
+    <div class="text-muted">{{ trabajador.nombre_completo }}</div>
+  </div>
+  <a href="{% url 'trabajadores:descuento_list' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="alert alert-info mb-3">
+  <strong>Tipos:</strong> Tardanzas, Incumplimientos (una quincena). <strong>AFP y ONP</strong> aplican automáticamente a ambas quincenas.
+</div>
+
+<div class="card lf-card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Fecha</label>
+          {{ form.fecha }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Monto</label>
+          {{ form.monto }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo</label>
+          {{ form.tipo }}
+        </div>
+        <div class="col-md-3" id="periodo-wrap">
+          <label class="form-label">Periodo referido</label>
+          {{ form.periodo_referencia }}
+          <div class="form-text" id="periodo-help">Quincena 1, 2 o ambas</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Mes ref.</label>
+          {{ form.mes_ref }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Año ref.</label>
+          {{ form.anio_ref }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Observaciones</label>
+          {{ form.observaciones }}
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+        <a class="btn btn-outline-secondary" href="{% url 'trabajadores:descuento_list' trabajador.pk %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var tipo = document.getElementById('id_tipo');
+  var periodoWrap = document.getElementById('periodo-wrap');
+  var periodoField = document.getElementById('id_periodo_referencia');
+  var help = document.getElementById('periodo-help');
+  if (!tipo || !periodoField) return;
+  function update() {
+    var v = tipo.value;
+    if (v === 'afp' || v === 'onp') {
+      periodoField.value = 'ambas';
+      periodoField.disabled = true;
+      if (help) help.textContent = 'AFP/ONP: aplica a ambas quincenas';
+    } else {
+      periodoField.disabled = false;
+      if (help) help.textContent = 'Quincena 1, 2 o ambas';
+    }
+  }
+  tipo.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

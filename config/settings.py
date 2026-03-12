@@ -5,6 +5,9 @@ Configuración del proyecto LatinForce - Sistema de Gestión de Gimnasio.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -58,6 +61,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.configuracion_empresa',
             ],
         },
     },

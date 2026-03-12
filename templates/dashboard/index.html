@@ -35,7 +35,7 @@
                     <div class="ms-3">
                         <div class="kpi">
                             <div class="label">Clientes activos</div>
-                            <p class="value">{{ total_clientes_activos }}</p>
+                            <p class="value" data-realtime="total_clientes_activos">{{ total_clientes_activos }}</p>
                             <div class="hint">Base del gimnasio</div>
                         </div>
                     </div>
@@ -54,7 +54,7 @@
                     <div class="ms-3">
                         <div class="kpi">
                             <div class="label">Planes activos</div>
-                            <p class="value">{{ total_planes_activos }}</p>
+                            <p class="value" data-realtime="total_planes_activos">{{ total_planes_activos }}</p>
                             <div class="hint">Ofertas vigentes</div>
                         </div>
                     </div>
@@ -73,8 +73,8 @@
                     <div class="ms-3">
                         <div class="kpi">
                             <div class="label">Pagos hoy</div>
-                            <p class="value">S/ {{ total_ingresos_hoy|floatformat:2 }}</p>
-                            <div class="hint">{{ pagos_hoy }} pago{{ pagos_hoy|pluralize }} · Mes: S/ {{ total_ingresos_mes|floatformat:2 }}</div>
+                            <p class="value" data-realtime="total_ingresos_hoy">S/ {{ total_ingresos_hoy|floatformat:2 }}</p>
+                            <div class="hint" data-realtime="pagos_hoy_hint">{{ pagos_hoy }} pago{{ pagos_hoy|pluralize }} · Mes: S/ {{ total_ingresos_mes|floatformat:2 }}</div>
                         </div>
                     </div>
                 </div>
@@ -92,8 +92,8 @@
                     <div class="ms-3">
                         <div class="kpi">
                             <div class="label">Deudas pendientes</div>
-                            <p class="value">S/ {{ total_deudas_pendientes|floatformat:2 }}</p>
-                            <div class="hint">{{ cantidad_deudas }} cuenta{{ cantidad_deudas|pluralize }}</div>
+                            <p class="value" data-realtime="total_deudas_pendientes">S/ {{ total_deudas_pendientes|floatformat:2 }}</p>
+                            <div class="hint" data-realtime="cantidad_deudas_hint">{{ cantidad_deudas }} cuenta{{ cantidad_deudas|pluralize }}</div>
                         </div>
                     </div>
                 </div>
@@ -115,15 +115,15 @@
                     <div class="col-6">
                         <div class="kpi">
                             <div class="label">Hoy</div>
-                            <p class="value">S/ {{ total_ventas_hoy|floatformat:2 }}</p>
-                            <div class="hint">{{ ventas_hoy }} venta{{ ventas_hoy|pluralize }}</div>
+                            <p class="value" data-realtime="total_ventas_hoy">S/ {{ total_ventas_hoy|floatformat:2 }}</p>
+                            <div class="hint" data-realtime="ventas_hoy_hint">{{ ventas_hoy }} venta{{ ventas_hoy|pluralize }}</div>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="kpi">
                             <div class="label">Este mes</div>
-                            <p class="value">S/ {{ total_ventas_mes|floatformat:2 }}</p>
-                            <div class="hint">{{ total_ventas_count }} emitida{{ total_ventas_count|pluralize }}</div>
+                            <p class="value" data-realtime="total_ventas_mes">S/ {{ total_ventas_mes|floatformat:2 }}</p>
+                            <div class="hint" data-realtime="total_ventas_count_hint">{{ total_ventas_count }} emitida{{ total_ventas_count|pluralize }}</div>
                         </div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <div class="list-group list-group-flush">
+                <div class="list-group list-group-flush" id="realtime-actividad" data-realtime="actividad">
                     {% for v in ultimas_ventas %}
                         <div class="list-group-item activity-item">
                             <div class="d-flex justify-content-between">
@@ -236,4 +236,59 @@
         </div>
     </div>
 </div>
-{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const API_URL = '{% url "dashboard:api_live" %}';
+    const POLL_INTERVAL = 3000;
+
+    function fmtNum(n) { return Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function pluralize(n, singular, plural) { return n === 1 ? singular : (plural || singular + 's'); }
+
+    function updateDOM(data) {
+        const updates = {
+            'total_clientes_activos': String(data.total_clientes_activos),
+            'total_planes_activos': String(data.total_planes_activos),
+            'total_ingresos_hoy': 'S/ ' + fmtNum(data.total_ingresos_hoy),
+            'pagos_hoy_hint': data.pagos_hoy + ' ' + pluralize(data.pagos_hoy, 'pago') + ' · Mes: S/ ' + fmtNum(data.total_ingresos_mes),
+            'total_ventas_hoy': 'S/ ' + fmtNum(data.total_ventas_hoy),
+            'ventas_hoy_hint': data.ventas_hoy + ' ' + pluralize(data.ventas_hoy, 'venta'),
+            'total_ventas_mes': 'S/ ' + fmtNum(data.total_ventas_mes),
+            'total_ventas_count_hint': data.total_ventas_count + ' emitida' + (data.total_ventas_count === 1 ? '' : 's'),
+            'total_deudas_pendientes': 'S/ ' + fmtNum(data.total_deudas_pendientes),
+            'cantidad_deudas_hint': data.cantidad_deudas + ' cuenta' + (data.cantidad_deudas === 1 ? '' : 's'),
+        };
+        document.querySelectorAll('[data-realtime]').forEach(el => {
+            const key = el.getAttribute('data-realtime');
+            if (key === 'actividad') return;
+            if (updates[key] !== undefined) el.textContent = updates[key];
+        });
+
+        const cont = document.getElementById('realtime-actividad');
+        if (cont) {
+            let html = '';
+            (data.ultimas_ventas || []).forEach(v => {
+                html += '<div class="list-group-item activity-item"><div class="d-flex justify-content-between"><div class="fw-semibold">' + v.serie + '-' + v.numero_comprobante + ' <span class="text-muted small">' + (v.tipo_comprobante || '') + '</span></div><div class="fw-bold">S/ ' + fmtNum(v.total) + '</div></div><small>' + v.fecha_emision + ' · ' + (v.cliente_nombre || '—') + '</small></div>';
+            });
+            (data.ultimos_pagos || []).forEach(p => {
+                html += '<div class="list-group-item activity-item"><div class="d-flex justify-content-between"><div class="fw-semibold">' + (p.numero_comprobante || 'Pago') + ' <span class="text-muted small">' + (p.metodo_pago || '') + '</span></div><div class="fw-bold">S/ ' + fmtNum(p.monto) + '</div></div><small>' + p.fecha_pago + ' · ' + (p.cliente_nombre || '') + '</small></div>';
+            });
+            if (!html) html = '<div class="list-group-item text-muted">Sin actividad reciente.</div>';
+            cont.innerHTML = html;
+        }
+    }
+
+    function poll() {
+        fetch(API_URL, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(updateDOM)
+            .catch(() => {});
+    }
+
+    poll();
+    setInterval(poll, POLL_INTERVAL);
+})();
+</script>
+{% endblock extra_js %}
+{% endblock content %}

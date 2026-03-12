@@ -1,0 +1,139 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Registro rápido asistencia{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center min-vh-75 py-5">
+    <h1 class="h4 mb-4 text-muted">Registro rápido</h1>
+
+    {% if preguntar_invitado and cliente %}
+    <div class="w-100 mb-4" style="max-width: 420px;">
+        <div class="alert alert-success">
+            <strong>Ingreso registrado.</strong> {{ cliente.nombre_completo }} puede traer hasta 3 invitados por mes.
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="mb-2">¿Desea registrar un invitado en esta jornada?</p>
+                <p class="small text-muted mb-3">Invitados restantes este mes: {{ invitados_restantes }}</p>
+                <form method="post" class="mb-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="dni" value="{{ dni }}">
+                    <input type="hidden" name="asistencia_id" value="{{ ultima_asistencia.pk }}">
+                    <div class="mb-2">
+                        <input type="text" name="invitado_nombre" class="form-control" placeholder="Nombre del invitado"
+                               maxlength="120" autofocus>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="invitado_documento" class="form-control" placeholder="DNI (opcional)"
+                               maxlength="20">
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" name="accion" value="registrar_invitado" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-1"></i>Registrar invitado
+                        </button>
+                        <a href="{% url 'clientes:asistencia_rapido' %}" class="btn btn-outline-secondary">Listo, omitir</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% elif ya_dentro and cliente %}
+    <div class="w-100 mb-4" style="max-width: 420px;">
+        <div class="alert alert-warning">
+            <strong>El paciente ya está dentro de su jornada de ingreso.</strong>
+            <p class="mb-1 mt-2">No puede aperturar otra jornada. La actual se cerrará automáticamente a la 1h 30min desde el ingreso.</p>
+            <p class="mb-0"><i class="bi bi-clock me-1"></i>Ingreso: <strong>{{ ultima_asistencia.fecha_hora_ingreso|date:"d/m/Y H:i" }}</strong></p>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="mb-3">¿Desea cerrar la jornada manualmente?</p>
+                <form method="post" class="mb-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="dni" value="{{ dni }}">
+                    <button type="submit" name="accion" value="cerrar_jornada" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar jornada
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <a href="{% url 'clientes:asistencia_rapido' %}" class="btn btn-sm btn-outline-secondary">← Ingresar otro DNI</a>
+        </div>
+    </div>
+    {% elif limite_diario and cliente %}
+    <div class="w-100 mb-4" style="max-width: 400px;">
+        <div class="alert alert-danger">
+            <strong>Límite alcanzado.</strong> El cliente puede ingresar máximo 2 veces por día (cada jornada 1h 30min).
+            <br><small>Ya tiene {{ asistencias_hoy }} asistencia(s) registrada(s) hoy.</small>
+        </div>
+        <div class="text-center">
+            <a href="{% url 'clientes:asistencia_rapido' %}" class="btn btn-outline-secondary">← Ingresar otro DNI</a>
+        </div>
+    </div>
+    {% elif sin_plan and cliente %}
+    <div class="w-100 mb-4" style="max-width: 400px;">
+        {% if en_mora %}
+        <div class="alert alert-danger">
+            <strong>Advertencia:</strong> El cliente presenta mora (plan vencido, anulado o en mora).
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <strong>{{ cliente.nombre_completo }}</strong> no tiene plan activo.
+        </div>
+        {% endif %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% if ultimo_plan %}
+                <div class="mb-3 p-3 rounded bg-light border">
+                    <p class="mb-1 small text-muted">Último plan utilizado:</p>
+                    <p class="mb-0 fw-semibold">{{ ultimo_plan.plan.nombre }} ({{ ultimo_plan.plan.get_tipo_periodo_display }}) — S/ {{ ultimo_plan.plan.precio }}</p>
+                    <p class="mb-0 small text-muted mt-1">Pago anterior: {{ ultimo_plan.fecha_pago|date:"d/m/Y" }}{% if fecha_vencimiento_plan %} · Venció: {{ fecha_vencimiento_plan|date:"d/m/Y" }}{% endif %}</p>
+                    <p class="mb-0 small text-info mt-1"><i class="bi bi-info-circle me-1"></i>El nuevo periodo iniciará desde la fecha de pago (si paga hoy, empieza hoy). Podrás cambiar el plan en el formulario.</p>
+                </div>
+                {% endif %}
+                <p class="mb-3">Elija una opción:</p>
+                <div class="d-flex flex-column gap-2">
+                    <a href="{% url 'pagos:create' %}?cliente={{ cliente.pk }}{% if ultimo_plan %}&plan={{ ultimo_plan.plan.pk }}{% endif %}" class="btn btn-primary">
+                        <i class="bi bi-credit-card me-2"></i>Registrar en plan{% if ultimo_plan %} ({{ ultimo_plan.plan.nombre }}){% endif %}
+                    </a>
+                    <form method="post" class="mb-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="dni" value="{{ dni }}">
+                        <button type="submit" name="accion" value="registrar_rutina" class="btn btn-success w-100">
+                            <i class="bi bi-cash me-2"></i>Registrar rutina (S/ 5)
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <a href="{% url 'clientes:asistencia_rapido' %}">← Ingresar otro DNI</a>
+        </div>
+    </div>
+    {% else %}
+    <form method="post" class="w-100" style="max-width: 400px;" id="form-rapido">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="dni" class="form-label visually-hidden">DNI</label>
+            <input type="text" name="dni" id="dni" value="{{ dni }}" placeholder="Introduce DNI"
+                   class="form-control form-control-lg text-center" autofocus autocomplete="off"
+                   style="font-size: 1.5rem; letter-spacing: 0.1em;">
+        </div>
+        <button type="submit" class="btn btn-success btn-lg w-100 py-3">
+            <i class="bi bi-check-circle me-2"></i>Registrar
+        </button>
+    </form>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'clientes:asistencia_registrar' %}" class="btn btn-sm btn-outline-secondary">Modo detallado</a>
+        <a href="{% url 'clientes:list' %}" class="btn btn-sm btn-outline-secondary ms-2">Clientes</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var dniEl = document.getElementById('dni');
+if (dniEl) dniEl.focus();
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Comprobante - {{ venta.serie }}-{{ venta.numero_comprobante }}{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+    @page { size: 80mm auto; margin: 4mm; }
+    html, body { width: 80mm; background: #fff !important; }
+    nav, .navbar, .btn, .btn-group, a, .alert { display: none !important; }
+    main { padding: 0 !important; }
+    #comprobante { box-shadow: none !important; border: none !important; }
+    #comprobante .card-body { padding: 0 !important; }
+    table { font-size: 10px; }
+    h1, h3, h5 { margin: 0 !important; }
+}
+/* Vista en pantalla también tipo ticket */
+#comprobante { max-width: 80mm; margin: 0 auto; }
+#comprobante table { font-size: 12px; }
+.ticket {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.15;
+}
+.ticket .muted { color: #444; }
+.ticket .hr {
+    border-top: 1px dashed #111;
+    margin: .35rem 0;
+}
+.ticket .kv { display: grid; grid-template-columns: 1fr auto; column-gap: .5rem; }
+.ticket .kv div:first-child { font-weight: 700; }
+.ticket .right { text-align: right; }
+.ticket .center { text-align: center; }
+.ticket table { width: 100%; border-collapse: collapse; }
+.ticket th { font-size: 11px; padding: 2px 0; }
+.ticket td { padding: 2px 0; vertical-align: top; }
+.ticket .totals .kv { font-size: 12px; }
+.ticket .total-line { font-weight: 800; font-size: 14px; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Comprobante de venta</h1>
+    <div class="btn-group">
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        <a class="btn btn-outline-primary" href="{% url 'ventas:comprobante_pdf' venta.pk %}">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF 80mm
+        </a>
+        <a href="{% url 'ventas:list' %}" class="btn btn-outline-secondary">Volver a ventas</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" id="comprobante">
+    <div class="card-body p-4 ticket">
+        <div class="center">
+            <div class="fw-bold">{{ venta.get_tipo_comprobante_display|upper }}</div>
+            <div class="fw-bold" style="font-size: 16px;">{{ venta.serie }}-{{ venta.numero_comprobante }}</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="kv">
+            <div>DOCUMENTO</div>
+            <div class="right">{{ venta.cliente.dni|default:"—" }}</div>
+        </div>
+        <div class="kv">
+            <div>CLIENTE</div>
+            <div class="right">{{ venta.cliente.nombre_completo|default:"—" }}</div>
+        </div>
+        {% if venta.cliente.direccion %}
+        <div class="mt-1">
+            <div class="fw-bold">DIRECCIÓN</div>
+            <div class="muted">{{ venta.cliente.direccion }}</div>
+        </div>
+        {% endif %}
+
+        <div class="mt-2 kv">
+            <div>F. EMISIÓN</div>
+            <div class="right">{{ venta.fecha_emision|date:"d/m/Y" }}</div>
+        </div>
+        <div class="kv">
+            <div>MONEDA</div>
+            <div class="right">{{ moneda|default:"SOLES" }}</div>
+        </div>
+        {% if venta.condicion_pago %}
+        <div class="kv">
+            <div>CONDICIÓN</div>
+            <div class="right">{{ venta.condicion_pago|upper }}</div>
+        </div>
+        {% else %}
+        <div class="kv">
+            <div>CONDICIÓN</div>
+            <div class="right">CONTADO</div>
+        </div>
+        {% endif %}
+
+        <div class="hr"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="left">DESCRIPCIÓN</th>
+                    <th class="right" style="width: 18mm;">P/U</th>
+                    <th class="right" style="width: 18mm;">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in venta.detalles.all %}
+                <tr>
+                    <td>
+                        {{ d.producto.nombre }}
+                        {% if d.cantidad and d.cantidad != 1 %}
+                            <div class="muted">x {{ d.cantidad }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="right">{{ d.precio_unitario }}</td>
+                    <td class="right">{{ d.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="hr"></div>
+
+        <div class="totals">
+            {% if venta.tipo_comprobante == 'factura' %}
+            <div class="kv">
+                <div>GRAVADO</div>
+                <div class="right">S/ {{ gravado_calc }}</div>
+            </div>
+            <div class="kv">
+                <div>I.G.V. 18%</div>
+                <div class="right">S/ {{ igv_calc }}</div>
+            </div>
+            {% endif %}
+            <div class="kv total-line">
+                <div>TOTAL</div>
+                <div class="right">S/ {{ venta.total }}</div>
+            </div>
+        </div>
+
+        <div class="mt-2 fw-bold" style="font-size: 11px;">
+            {{ total_letras|default:"" }}
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="kv">
+            <div>USUARIO</div>
+            <div class="right">{{ venta.usuario.username|default:"" }}</div>
+        </div>
+        <div class="muted">{{ now|date:"d/m/Y h:i A" }}</div>
+
+        {% if venta.observaciones %}
+        <div class="hr"></div>
+        <div class="muted"><span class="fw-bold">OBS:</span> {{ venta.observaciones }}</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

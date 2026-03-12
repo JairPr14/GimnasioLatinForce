@@ -1,0 +1,97 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Cliente - {{ cliente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ cliente.nombre_completo }}</h1>
+    <div class="btn-group">
+        <a href="{% url 'pagos:historial_cliente' cliente.pk %}" class="btn btn-primary">
+            <i class="bi bi-cash me-1"></i>Historial pagos
+        </a>
+        <a href="{% url 'pagos:create' %}?cliente={{ cliente.pk }}{% if ultimo_plan %}&plan={{ ultimo_plan.plan.pk }}{% endif %}" class="btn btn-success">
+            <i class="bi bi-plus-lg me-1"></i>Registrar pago
+        </a>
+        <a href="{% url 'clientes:update' cliente.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        <a href="{% url 'clientes:delete' cliente.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Eliminar
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        {% if cliente.foto %}
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body text-center p-3">
+                <img src="{{ cliente.foto.url }}" alt="{{ cliente.nombre_completo }}" class="img-fluid rounded" style="max-height: 200px;">
+            </div>
+        </div>
+        {% endif %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Datos generales</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>DNI:</strong> {{ cliente.dni }}</p>
+                <p><strong>Teléfono:</strong> {{ cliente.telefono }}</p>
+                <p><strong>Correo:</strong> {{ cliente.correo|default:"—" }}</p>
+                <p><strong>Estado:</strong>
+                    {% if cliente.estado == 'activo' %}<span class="badge bg-success">Activo</span>
+                    {% elif cliente.estado == 'suspendido' %}<span class="badge bg-warning text-dark">Suspendido</span>
+                    {% else %}<span class="badge bg-secondary">Retirado</span>{% endif %}
+                </p>
+                <p><strong>Inscripción:</strong> {{ cliente.fecha_inscripcion|date:"d/m/Y" }}</p>
+                {% if cliente.contacto_emergencia %}
+                <p><strong>Contacto emergencia:</strong> {{ cliente.contacto_emergencia }}</p>
+                {% endif %}
+                {% if cliente.direccion %}
+                <p><strong>Dirección:</strong> {{ cliente.direccion }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Estado de plan</h6>
+                <a href="{% url 'pagos:create' %}?cliente={{ cliente.pk }}{% if ultimo_plan %}&plan={{ ultimo_plan.plan.pk }}{% endif %}" class="btn btn-sm btn-success">Renovar / Pagar</a>
+            </div>
+            <div class="card-body">
+                {% if ultimo_plan %}
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Plan:</strong> {{ ultimo_plan.plan.nombre }}</p>
+                        <p class="mb-1"><strong>Fecha de pago:</strong> {{ ultimo_plan.fecha_pago|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Vence:</strong> {{ fecha_vencimiento_plan|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Estado:</strong>
+                            {% if plan_activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Vencido</span>
+                            {% endif %}
+                        </p>
+                        <p class="mb-0"><strong>Tipo:</strong> {{ ultimo_plan.plan.get_tipo_periodo_display }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="mb-0 text-muted">Sin plan registrado. Registre un pago para activar.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% if cliente.observaciones_medicas %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Observaciones médicas / restricciones físicas</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ cliente.observaciones_medicas }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Trabajador{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{{ trabajador.nombre_completo }}</h1>
+    <div class="text-muted">{{ trabajador.cargo|default:"—" }} · {{ trabajador.documento|default:"—" }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'trabajadores:pago_list' trabajador.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-cash me-1"></i>Pagos
+    </a>
+    <a href="{% url 'trabajadores:sueldo_list' trabajador.pk %}" class="btn btn-outline-primary">
+      <i class="bi bi-wallet2 me-1"></i>Sueldos
+    </a>
+    <a href="{% url 'trabajadores:update' trabajador.pk %}" class="btn btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+    <a href="{% url 'trabajadores:list' %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card lf-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="text-muted small">Sueldo mensual</div>
+            <div class="fw-bold fs-4">S/ {{ trabajador.sueldo_mensual }}</div>
+          </div>
+          <div class="text-end">
+            {% if trabajador.estado == 'activo' %}
+              <span class="badge-soft success">Activo</span>
+            {% else %}
+              <span class="badge-soft neutral">Inactivo</span>
+            {% endif %}
+            <div class="text-muted small mt-2">Ingreso: {{ trabajador.fecha_ingreso|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+        </div>
+        <hr>
+        <div class="text-muted small">Contacto</div>
+        <div class="fw-semibold">{{ trabajador.telefono|default:"—" }}</div>
+        <div class="text-muted">{{ trabajador.correo|default:"—" }}</div>
+        {% if trabajador.direccion %}
+          <div class="text-muted mt-2">{{ trabajador.direccion }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card lf-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-semibold">Pagos recientes</div>
+        <div class="text-muted small">Total pagado: <strong>S/ {{ total_pagado }}</strong></div>
+      </div>
+      <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+          {% for p in pagos_recientes %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold">S/ {{ p.monto }} <span class="text-muted small">· {{ p.get_metodo_pago_display }}</span></div>
+                <div class="text-muted small">{{ p.fecha_pago|date:"d/m/Y" }} · {{ p.concepto|default:"Pago" }}</div>
+              </div>
+              <div class="text-muted small">{{ p.numero_comprobante|default:"—" }}</div>
+            </div>
+          {% empty %}
+            <div class="list-group-item text-muted">Aún no hay pagos registrados.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-0">
+  <div class="col-lg-12">
+    <div class="card lf-card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-semibold">Historial de sueldos (reciente)</div>
+        <a href="{% url 'trabajadores:sueldo_create' trabajador.pk %}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-plus-lg me-1"></i>Actualizar sueldo
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle lf-table">
+            <thead>
+              <tr>
+                <th>Desde</th>
+                <th>Sueldo</th>
+                <th>Motivo</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in sueldos_recientes %}
+              <tr>
+                <td>{{ s.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="fw-semibold">S/ {{ s.sueldo_mensual }}</td>
+                <td>{{ s.motivo|default:"—" }}</td>
+                <td class="text-muted">{{ s.usuario_registro.username|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted py-4">Aún no hay historial. Registra el primer sueldo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,332 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Nueva venta{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Nueva venta</h1>
+    <div class="d-flex align-items-center gap-3">
+        <div class="form-check form-switch mb-0">
+            {{ form.es_proforma }}
+            <label class="form-check-label" for="id_es_proforma">PROFORMA</label>
+        </div>
+        <a href="{% url 'ventas:list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+    </div>
+</div>
+
+<form method="post" id="ventaForm">
+    {% csrf_token %}
+    <input type="hidden" name="items_json" id="itemsJson" value="[]">
+
+    <style>
+        .busqueda-panel { position: relative; }
+        .busqueda-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            max-height: 320px;
+            overflow: auto;
+        }
+        .busqueda-item small { display: block; }
+        .qty-input { max-width: 90px; }
+        .sticky-total {
+            position: sticky;
+            bottom: 0;
+            z-index: 1040;
+        }
+        @media (max-width: 768px) {
+            .qty-input { max-width: 76px; }
+        }
+    </style>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Cliente</label>
+                    {{ form.cliente }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha de emisión</label>
+                    {{ form.fecha_emision }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha de vcto.</label>
+                    {{ form.fecha_vencimiento }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tipo de comprobante</label>
+                    {{ form.tipo_comprobante }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Serie</label>
+                    {{ form.serie }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Tipo de operación</label>
+                    {{ form.tipo_operacion }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Dscto. global (%)</label>
+                    {{ form.descuento_global }}
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-auto">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#obsCond">
+                        <i class="bi bi-chat-text me-1"></i>OBSERVACIONES
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#condPago">
+                        <i class="bi bi-credit-card me-1"></i>COND. PAGO
+                    </button>
+                </div>
+            </div>
+            <div class="collapse mt-2" id="obsCond">
+                <label class="form-label">Observaciones</label>
+                {{ form.observaciones }}
+            </div>
+            <div class="collapse mt-2" id="condPago">
+                <label class="form-label">Condición de pago</label>
+                {{ form.condicion_pago }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tablaDetalle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center" style="width: 130px;">Cantidad</th>
+                            <th class="text-end">P. unit.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th width="60"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoDetalle">
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyDetalle" class="text-center text-muted py-4">No hay productos. Busca y agrega abajo.</div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm sticky-total">
+        <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3 flex-grow-1">
+                <label class="form-label mb-0 fw-bold">Buscar</label>
+                <div class="busqueda-panel flex-grow-1" style="min-width: 280px;">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="buscarProducto" class="form-control" placeholder="Código, nombre o código de barras" autocomplete="off">
+                        <button type="button" class="btn btn-outline-secondary" id="btnBuscar" title="Buscar">
+                            Buscar
+                        </button>
+                    </div>
+                    <div id="resultadosBusqueda" class="busqueda-dropdown" style="display:none;"></div>
+                    <div class="form-text mb-0">Tip: escribe y presiona Enter para agregar el primer resultado.</div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-4">
+                <div>
+                    <span class="text-muted me-2">TOTAL</span>
+                    <span class="fs-4 fw-bold" id="totalVenta">0.00</span>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary btn-lg" id="btnProcesar">
+                        <i class="bi bi-check-lg me-1"></i>PROCESAR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+(function() {
+    const items = [];
+    const cuerpoDetalle = document.getElementById('cuerpoDetalle');
+    const emptyDetalle = document.getElementById('emptyDetalle');
+    const itemsJson = document.getElementById('itemsJson');
+    const totalVenta = document.getElementById('totalVenta');
+    const buscarProducto = document.getElementById('buscarProducto');
+    const resultadosBusqueda = document.getElementById('resultadosBusqueda');
+    const descuentoGlobal = document.querySelector('[name="descuento_global"]');
+    const btnBuscar = document.getElementById('btnBuscar');
+    let lastResults = [];
+    let debounceTimer = null;
+
+    function actualizarTotal() {
+        let subtotal = items.reduce((s, it) => s + parseFloat(it.subtotal || 0), 0);
+        const d = (parseFloat(descuentoGlobal?.value) || 0) / 100;
+        const total = subtotal * (1 - d);
+        totalVenta.textContent = total.toFixed(2);
+    }
+
+    function actualizarItemsJson() {
+        itemsJson.value = JSON.stringify(items);
+        actualizarTotal();
+    }
+
+    function quitarItem(index) {
+        items.splice(index, 1);
+        renderDetalle();
+    }
+
+    function setCantidad(index, nuevaCantidad) {
+        const it = items[index];
+        if (!it) return;
+        const cant = parseFloat(nuevaCantidad);
+        if (!Number.isFinite(cant) || cant <= 0) return;
+        it.cantidad = cant;
+        it.subtotal = (cant * parseFloat(it.precio)).toFixed(2);
+        renderDetalle(false);
+    }
+
+    function renderDetalle() {
+        cuerpoDetalle.innerHTML = '';
+        items.forEach((it, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${it.nombre || ''} <small class="text-muted">${it.codigo || ''}</small></td>
+                <td class="text-center">
+                    <input type="number" step="1" min="1" class="form-control form-control-sm text-center qty-input" value="${it.cantidad}">
+                </td>
+                <td class="text-end">${parseFloat(it.precio).toFixed(2)}</td>
+                <td class="text-end fw-bold">${parseFloat(it.subtotal).toFixed(2)}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger" data-index="${i}"><i class="bi bi-trash"></i></button></td>
+            `;
+            tr.querySelector('input').addEventListener('input', (e) => setCantidad(i, e.target.value));
+            tr.querySelector('button').addEventListener('click', () => quitarItem(i));
+            cuerpoDetalle.appendChild(tr);
+        });
+        emptyDetalle.style.display = items.length ? 'none' : 'block';
+        actualizarItemsJson();
+    }
+
+    function agregarProducto(p, cantidad) {
+        const cant = parseFloat(cantidad || 1);
+        const precio = parseFloat(p.precio);
+        const subtotal = cant * precio;
+        const permiteSinStock = !!p.permitir_vender_sin_stock;
+        if (p.stock < cant && !permiteSinStock) {
+            alert('Stock insuficiente. Hay ' + p.stock + ' ' + (p.unidad || 'UND') + '. Habilita \"Vender sin stock\" en el producto si deseas permitirlo.');
+            return;
+        }
+        // Si ya existe el producto, sumamos cantidad
+        const idx = items.findIndex(x => String(x.producto_id) === String(p.id));
+        if (idx >= 0) {
+            const nueva = (parseFloat(items[idx].cantidad) || 0) + cant;
+            items[idx].cantidad = nueva;
+            items[idx].subtotal = (nueva * parseFloat(items[idx].precio)).toFixed(2);
+        } else {
+            items.push({
+                producto_id: p.id,
+                nombre: p.nombre,
+                codigo: p.codigo,
+                cantidad: cant,
+                precio: p.precio,
+                subtotal: subtotal.toFixed(2)
+            });
+        }
+        renderDetalle();
+        buscarProducto.value = '';
+        hideResultados();
+    }
+
+    function hideResultados() {
+        resultadosBusqueda.style.display = 'none';
+        resultadosBusqueda.innerHTML = '';
+        lastResults = [];
+    }
+
+    function renderResultados(data) {
+        resultadosBusqueda.innerHTML = '';
+        const productos = (data && data.productos) ? data.productos : [];
+        lastResults = productos;
+        if (productos.length === 0) {
+            resultadosBusqueda.innerHTML = '<div class="list-group shadow"><div class="list-group-item text-muted">Sin resultados</div></div>';
+            resultadosBusqueda.style.display = 'block';
+            return;
+        }
+        const div = document.createElement('div');
+        div.className = 'list-group shadow';
+        productos.forEach((p, idx) => {
+            const a = document.createElement('a');
+            a.href = '#';
+            a.className = 'list-group-item list-group-item-action busqueda-item';
+            a.dataset.index = String(idx);
+            a.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div><strong>${p.nombre}</strong></div>
+                    <div class="fw-bold">S/ ${p.precio}</div>
+                </div>
+                <small class="text-muted">Código: ${p.codigo || '—'} · Stock: ${p.stock}</small>
+            `;
+            a.addEventListener('click', function(e) { e.preventDefault(); agregarProducto(p); });
+            div.appendChild(a);
+        });
+        resultadosBusqueda.appendChild(div);
+        resultadosBusqueda.style.display = 'block';
+    }
+
+    function buscar(q) {
+        fetch('{% url "inventario:api_buscar" %}?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(renderResultados)
+            .catch(() => hideResultados());
+    }
+
+    btnBuscar.addEventListener('click', function() {
+        const q = buscarProducto.value.trim();
+        if (!q) return;
+        buscar(q);
+    });
+
+    buscarProducto.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (lastResults.length) {
+                agregarProducto(lastResults[0]);
+                return;
+            }
+            btnBuscar.click();
+        }
+        if (e.key === 'Escape') {
+            hideResultados();
+        }
+    });
+
+    buscarProducto.addEventListener('input', function() {
+        const q = buscarProducto.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (!q) { hideResultados(); return; }
+        debounceTimer = setTimeout(() => buscar(q), 250);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!resultadosBusqueda.contains(e.target) && e.target !== buscarProducto && e.target !== btnBuscar) {
+            hideResultados();
+        }
+    });
+
+    document.getElementById('ventaForm').addEventListener('submit', function(event) {
+        if (items.length === 0) {
+            event.preventDefault();
+            alert('Agrega al menos un producto a la venta.');
+            return false;
+        }
+        actualizarItemsJson();
+    });
+
+    if (descuentoGlobal) descuentoGlobal.addEventListener('input', actualizarTotal);
+
+    renderDetalle();
+})();
+</script>
+{% endblock %}

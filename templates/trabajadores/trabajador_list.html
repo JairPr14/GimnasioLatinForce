@@ -1,0 +1,65 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Trabajadores{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Trabajadores</h1>
+    <div class="text-muted">Gestiona personal, sueldos y pagos.</div>
+  </div>
+  <a href="{% url 'trabajadores:create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Nuevo trabajador
+  </a>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Trabajador</th>
+          <th>Documento</th>
+          <th>Cargo</th>
+          <th>Sueldo</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trabajadores %}
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ t.nombre_completo }}</div>
+            <div class="text-muted small">{{ t.telefono|default:"" }}{% if t.correo %} · {{ t.correo }}{% endif %}</div>
+          </td>
+          <td>{{ t.documento|default:"—" }}</td>
+          <td>{{ t.cargo|default:"—" }}</td>
+          <td class="fw-semibold">S/ {{ t.sueldo_mensual }}</td>
+          <td>
+            {% if t.estado == 'activo' %}
+              <span class="badge-soft success">Activo</span>
+            {% else %}
+              <span class="badge-soft neutral">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'trabajadores:detail' t.pk %}" title="Ver">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'trabajadores:update' t.pk %}" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'trabajadores:delete' t.pk %}" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-5">No hay trabajadores registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

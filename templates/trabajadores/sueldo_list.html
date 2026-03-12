@@ -1,0 +1,47 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Sueldos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Sueldos de {{ trabajador.nombre_completo }}</h1>
+    <div class="text-muted">Historial de cambios de sueldo con fecha de inicio.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'trabajadores:sueldo_create' trabajador.pk %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Actualizar sueldo
+    </a>
+    <a href="{% url 'trabajadores:detail' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Desde</th>
+          <th>Sueldo mensual</th>
+          <th>Motivo</th>
+          <th>Usuario</th>
+          <th>Registro</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sueldos %}
+        <tr>
+          <td class="fw-semibold">{{ s.fecha_inicio|date:"d/m/Y" }}</td>
+          <td class="fw-semibold">S/ {{ s.sueldo_mensual }}</td>
+          <td>{{ s.motivo|default:"—" }}</td>
+          <td class="text-muted">{{ s.usuario_registro.username|default:"—" }}</td>
+          <td class="text-muted">{{ s.fecha_creacion|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-5">No hay historial de sueldos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

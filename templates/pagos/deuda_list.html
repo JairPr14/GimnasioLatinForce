@@ -1,0 +1,72 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Deudas pendientes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Deudas pendientes</h1>
+    <a href="{% url 'pagos:deuda_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Registrar deuda
+    </a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group" style="max-width: 300px;">
+        <select name="cliente" class="form-select form-select-sm">
+            <option value="">Todos los clientes</option>
+            {% for c in clientes %}
+            <option value="{{ c.pk }}" {% if request.GET.cliente == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.nombre_completo }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Filtrar</button>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body bg-warning bg-opacity-10">
+        <strong>Total pendiente de cobro:</strong> S/ {{ total_pendiente }}
+    </div>
+</div>
+
+<div class="lf-table-wrap">
+        <table class="table table-hover align-middle lf-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Descripción</th>
+                    <th>Monto total</th>
+                    <th>Abonado</th>
+                    <th>Pendiente</th>
+                    <th>Vencimiento</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in deudas %}
+                <tr>
+                    <td><a href="{% url 'clientes:detail' d.cliente.pk %}">{{ d.cliente.nombre_completo }}</a></td>
+                    <td>{{ d.descripcion }}</td>
+                    <td>S/ {{ d.monto }}</td>
+                    <td>S/ {{ d.monto_abonado }}</td>
+                    <td>
+                        {% if d.saldada %}
+                        <span class="badge-soft success">Saldada</span>
+                        {% else %}
+                        <span class="badge-soft danger">S/ {{ d.monto_pendiente }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ d.fecha_vencimiento|date:"d/m/Y"|default:"—" }}</td>
+                    <td class="text-end">
+                        {% if not d.saldada %}
+                        <a href="{% url 'pagos:create' %}?cliente={{ d.cliente.pk }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-cash me-1"></i>Abonar
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No hay deudas pendientes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+</div>
+{% endblock %}

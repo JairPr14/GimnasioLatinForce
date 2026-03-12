@@ -1,0 +1,87 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Reporte pagos trabajadores{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Reporte de pagos a trabajadores</h1>
+    <div class="text-muted">Filtra por mes/año y trabajador. Total del mes: <strong>S/ {{ total_mes }}</strong></div>
+  </div>
+  <a href="{% url 'trabajadores:list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card lf-card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label">Año</label>
+        <input class="form-control" type="number" min="2000" max="2100" name="year" value="{{ f_year }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Mes</label>
+        <select class="form-select" name="month">
+          <option value="1" {% if f_month == 1 %}selected{% endif %}>01</option>
+          <option value="2" {% if f_month == 2 %}selected{% endif %}>02</option>
+          <option value="3" {% if f_month == 3 %}selected{% endif %}>03</option>
+          <option value="4" {% if f_month == 4 %}selected{% endif %}>04</option>
+          <option value="5" {% if f_month == 5 %}selected{% endif %}>05</option>
+          <option value="6" {% if f_month == 6 %}selected{% endif %}>06</option>
+          <option value="7" {% if f_month == 7 %}selected{% endif %}>07</option>
+          <option value="8" {% if f_month == 8 %}selected{% endif %}>08</option>
+          <option value="9" {% if f_month == 9 %}selected{% endif %}>09</option>
+          <option value="10" {% if f_month == 10 %}selected{% endif %}>10</option>
+          <option value="11" {% if f_month == 11 %}selected{% endif %}>11</option>
+          <option value="12" {% if f_month == 12 %}selected{% endif %}>12</option>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Trabajador</label>
+        <select class="form-select" name="trabajador">
+          <option value="">Todos</option>
+          {% for t in trabajadores %}
+            <option value="{{ t.pk }}" {% if f_trabajador == t.pk|stringformat:"d" %}selected{% endif %}>{{ t.nombre_completo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        <a class="btn btn-outline-secondary w-100" href="{% url 'trabajadores:reporte_pagos' %}">Limpiar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Trabajador</th>
+          <th>Monto</th>
+          <th>Método</th>
+          <th>Concepto</th>
+          <th>Comprobante</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pagos %}
+        <tr>
+          <td>{{ p.fecha_pago|date:"d/m/Y" }}</td>
+          <td class="fw-semibold">{{ p.trabajador.nombre_completo }}</td>
+          <td class="fw-semibold">S/ {{ p.monto }}</td>
+          <td><span class="badge-soft info">{{ p.get_metodo_pago_display }}</span></td>
+          <td>{{ p.concepto|default:"—" }}</td>
+          <td>{{ p.numero_comprobante|default:"—" }}</td>
+          <td class="text-muted">{{ p.usuario_registro.username|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">No hay pagos para este periodo.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

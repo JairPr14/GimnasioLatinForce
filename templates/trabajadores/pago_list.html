@@ -1,0 +1,62 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Pagos{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">Pagos a {{ trabajador.nombre_completo }}</h1>
+    <div class="text-muted">Total pagado: <strong>S/ {{ total_pagado }}</strong></div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'trabajadores:pago_create' trabajador.pk %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Registrar pago
+    </a>
+    <a href="{% url 'trabajadores:detail' trabajador.pk %}" class="btn btn-outline-secondary">Volver</a>
+  </div>
+</div>
+
+<div class="lf-table-wrap">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle lf-table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Monto</th>
+          <th>Método</th>
+          <th>Concepto</th>
+          <th>Comprobante</th>
+          <th>Acciones</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pagos %}
+        <tr>
+          <td>{{ p.fecha_pago|date:"d/m/Y" }}</td>
+          <td class="fw-semibold">S/ {{ p.monto }}</td>
+          <td><span class="badge-soft info">{{ p.get_metodo_pago_display }}</span></td>
+          <td>{{ p.concepto|default:"—" }}</td>
+          <td>
+            {% if p.numero_comprobante %}
+              <a href="{% url 'trabajadores:pago_comprobante' trabajador.pk p.pk %}">{{ p.numero_comprobante }}</a>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'trabajadores:pago_update' trabajador.pk p.pk %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'trabajadores:pago_comprobante' trabajador.pk p.pk %}" class="btn btn-sm btn-outline-secondary" title="Comprobante"><i class="bi bi-receipt"></i></a>
+            </div>
+          </td>
+          <td class="text-muted">{{ p.usuario_registro.username|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-5">No hay pagos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

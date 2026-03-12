@@ -1,0 +1,38 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Registrar deuda{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Registrar deuda</h1>
+    <a href="{% url 'pagos:deuda_list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Cliente</label>
+                    {{ form.cliente }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Monto (S/)</label>
+                    {{ form.monto }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Fecha vencimiento (opcional)</label>
+                    {{ form.fecha_vencimiento }}
+                </div>
+            </div>
+            <hr class="my-4">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a href="{% url 'pagos:deuda_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

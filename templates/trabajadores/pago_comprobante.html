@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprobante - {{ pago.numero_comprobante }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+    @media print {
+        @page { size: 80mm auto; margin: 4mm; }
+        html, body { width: 80mm; background: #fff !important; }
+        .btn, a { display: none !important; }
+        .container, .row, .col-md-6 { padding: 0 !important; margin: 0 !important; max-width: 80mm !important; }
+        .card { box-shadow: none !important; border: none !important; }
+        .card-body { padding: 0 !important; }
+        table { font-size: 10px; }
+    }
+    .col-md-6 { max-width: 80mm; }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <div class="text-center border-bottom pb-3 mb-3">
+                        <h4 class="mb-1">LatinForce</h4>
+                        <p class="text-muted small mb-0">Pago a trabajador</p>
+                    </div>
+                    <table class="table table-sm table-borderless">
+                        <tr><td><strong>Nº Comprobante:</strong></td><td>{{ pago.numero_comprobante|default:"—" }}</td></tr>
+                        <tr><td><strong>Fecha:</strong></td><td>{{ pago.fecha_pago|date:"d/m/Y" }}</td></tr>
+                        <tr><td><strong>Trabajador:</strong></td><td>{{ pago.trabajador.nombre_completo }}</td></tr>
+                        <tr><td><strong>Concepto:</strong></td><td>{{ pago.concepto|default:"—" }}</td></tr>
+                        <tr><td><strong>Método:</strong></td><td>{{ pago.get_metodo_pago_display }}</td></tr>
+                        <tr><td><strong>Monto:</strong></td><td class="fs-5 fw-bold">S/ {{ pago.monto }}</td></tr>
+                    </table>
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <small class="text-muted">Comprobante de pago a trabajador</small>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+                <a href="{% url 'trabajadores:pago_comprobante_pdf' pago.trabajador_id pago.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF 80mm
+                </a>
+                <a href="{% url 'trabajadores:pago_list' pago.trabajador_id %}" class="btn btn-outline-secondary">Volver</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

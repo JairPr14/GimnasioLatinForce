@@ -1,0 +1,68 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}{% if object %}Editar trabajador{% else %}Nuevo trabajador{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{% if object %}Editar trabajador{% else %}Nuevo trabajador{% endif %}</h1>
+    <div class="text-muted">Registra datos y sueldo mensual.</div>
+  </div>
+  <a href="{% url 'trabajadores:list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card lf-card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombres</label>
+          {{ form.nombres }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Apellidos</label>
+          {{ form.apellidos }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Documento</label>
+          {{ form.documento }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Teléfono</label>
+          {{ form.telefono }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Email</label>
+          {{ form.correo }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Dirección</label>
+          {{ form.direccion }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Cargo</label>
+          {{ form.cargo }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Sueldo mensual</label>
+          {{ form.sueldo_mensual }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Estado</label>
+          {{ form.estado }}
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Fecha ingreso</label>
+          {{ form.fecha_ingreso }}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+        <a class="btn btn-outline-secondary" href="{% url 'trabajadores:list' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

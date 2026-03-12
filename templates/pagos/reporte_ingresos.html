@@ -1,0 +1,139 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Reporte de ingresos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Reporte de ingresos</h1>
+    <a href="{% url 'pagos:list' %}" class="btn btn-outline-secondary">Volver a pagos</a>
+</div>
+
+<form method="get" class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small">Periodo</label>
+                <select name="periodo" class="form-select form-select-sm">
+                    <option value="diario" {% if periodo == 'diario' %}selected{% endif %}>Diario</option>
+                    <option value="semanal" {% if periodo == 'semanal' %}selected{% endif %}>Semanal</option>
+                    <option value="mensual" {% if periodo == 'mensual' %}selected{% endif %}>Mensual</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Fecha referencia</label>
+                <input type="date" name="fecha" value="{{ fecha_ref|date:'Y-m-d' }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Generar</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <h6 class="text-muted mb-0">Total pagos ({{ periodo }})</h6>
+                <div class="fs-5 fw-bold text-success">S/ {{ total_pagos|floatformat:2 }}</div>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted mb-0">Total ventas ({{ periodo }})</h6>
+                <div class="fs-5 fw-bold text-primary">S/ {{ total_ventas|floatformat:2 }}</div>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted mb-0">Total general ({{ periodo }})</h6>
+                <div class="fs-4 fw-bold">S/ {{ total_general|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPagos" type="button" role="tab">
+            Pagos
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVentas" type="button" role="tab">
+            Ventas
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="tabPagos" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Plan</th>
+                            <th>Concepto</th>
+                            <th>Método</th>
+                            <th>Monto</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in pagos %}
+                        <tr>
+                            <td>{{ p.fecha_pago|date:"d/m/Y" }}</td>
+                            <td>{{ p.cliente.nombre_completo }}</td>
+                            <td>{{ p.plan.nombre|default:"—" }}</td>
+                            <td>{{ p.concepto }}</td>
+                            <td>{{ p.get_metodo_pago_display }}</td>
+                            <td>S/ {{ p.monto }}</td>
+                            <td>
+                                <a href="{% url 'pagos:comprobante' p.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-receipt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">No hay pagos en este periodo.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="tabVentas" role="tabpanel">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Comprobante</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in ventas %}
+                        <tr>
+                            <td>{{ v.fecha_emision|date:"d/m/Y" }}</td>
+                            <td>{{ v.serie }}-{{ v.numero_comprobante }}</td>
+                            <td>{{ v.cliente.nombre_completo|default:"—" }}</td>
+                            <td class="fw-bold">S/ {{ v.total }}</td>
+                            <td>
+                                <a href="{% url 'ventas:comprobante' v.pk %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-receipt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">No hay ventas en este periodo.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

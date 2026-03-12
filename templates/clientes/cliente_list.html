@@ -1,0 +1,89 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Clientes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Clientes</h1>
+    <a href="{% url 'clientes:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo cliente
+    </a>
+</div>
+
+<form method="get" class="mb-3">
+    <div class="input-group" style="max-width: 400px;">
+        <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+               placeholder="Buscar por nombre, apellido o DNI">
+        <button type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+</form>
+
+<div class="lf-table-wrap">
+    <div class="table-responsive">
+            <table class="table table-hover align-middle lf-table">
+                <thead>
+                    <tr>
+                        <th>DNI</th>
+                        <th>Nombre</th>
+                        <th>Teléfono</th>
+                        <th>Estado</th>
+                        <th>Inscripción</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td>{{ cliente.dni }}</td>
+                        <td>
+                            <a href="{% url 'clientes:detail' cliente.pk %}" class="text-decoration-none fw-medium">
+                                {{ cliente.nombre_completo }}
+                            </a>
+                        </td>
+                        <td>{{ cliente.telefono }}</td>
+                        <td>
+                            {% if cliente.estado == 'activo' %}
+                            <span class="badge-soft success">Activo</span>
+                            {% elif cliente.estado == 'suspendido' %}
+                            <span class="badge-soft warning">Suspendido</span>
+                            {% else %}
+                            <span class="badge-soft neutral">Retirado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cliente.fecha_inscripcion|date:"d/m/Y" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'clientes:detail' cliente.pk %}" class="btn btn-sm btn-outline-primary" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'clientes:update' cliente.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'clientes:delete' cliente.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No hay clientes registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if is_paginated %}
+        <nav class="p-3 border-top">
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Siguiente</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+</div>
+{% endblock %}

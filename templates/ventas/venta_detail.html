@@ -1,0 +1,50 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Venta {{ venta.serie }}-{{ venta.numero_comprobante }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Venta {{ venta.serie }}-{{ venta.numero_comprobante }}</h1>
+    <div class="btn-group">
+        <a href="{% url 'ventas:comprobante' venta.pk %}" class="btn btn-outline-primary" target="_blank">Ver comprobante</a>
+        <a href="{% url 'ventas:comprobante_pdf' venta.pk %}" class="btn btn-outline-primary">PDF 80mm</a>
+    </div>
+    <a href="{% url 'ventas:list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6"><strong>Cliente:</strong> {{ venta.cliente.nombre_completo|default:"—" }}</div>
+            <div class="col-md-3"><strong>Fecha emisión:</strong> {{ venta.fecha_emision|date:"d/m/Y" }}</div>
+            <div class="col-md-3"><strong>Tipo:</strong> {{ venta.get_tipo_comprobante_display }}</div>
+            <div class="col-md-6"><strong>Total:</strong> S/ {{ venta.total }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white"><h6 class="mb-0">Detalle</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">P. unit.</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in venta.detalles.all %}
+                <tr>
+                    <td>{{ d.producto.nombre }}</td>
+                    <td class="text-center">{{ d.cantidad }}</td>
+                    <td class="text-end">S/ {{ d.precio_unitario }}</td>
+                    <td class="text-end">S/ {{ d.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

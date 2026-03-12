@@ -1,0 +1,117 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}{% if object %}Editar usuario{% else %}Nuevo usuario{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+  .user-form-title{ font-size: 1.55rem; font-weight: 850; letter-spacing: -.3px; margin:0; }
+  .user-form-sub{ color: var(--lf-muted); font-size: .92rem; }
+  .user-topbar{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom: 14px; }
+  .section-title{ font-weight: 800; letter-spacing: -.2px; margin: 0; }
+  .section-sub{ color: var(--lf-muted); font-size: .86rem; margin: 2px 0 0; }
+  .section-divider{ border-top: 1px solid var(--lf-border); margin: 14px 0; }
+  .form-help{ color: var(--lf-muted); font-size: .84rem; margin-top: 6px; }
+</style>
+
+<div class="user-topbar">
+  <div>
+    <h1 class="user-form-title">{% if object %}Editar usuario{% else %}Nuevo usuario{% endif %}</h1>
+    <div class="user-form-sub">Configura datos, estado y roles. Todo queda auditado por usuario del sistema.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+  </div>
+</div>
+
+<form method="post" class="card lf-card">
+  {% csrf_token %}
+  <div class="card-body">
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+      <div>
+        <div class="section-title">Datos del usuario</div>
+        <div class="section-sub">Información básica para iniciar sesión y contacto.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-check-lg me-1"></i>Guardar
+        </button>
+        <a class="btn btn-outline-secondary" href="{% url 'usuarios:usuario_list' %}">Cancelar</a>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Username</label>
+        {{ form.username }}
+        <div class="form-help">Único. Se usa para iniciar sesión.</div>
+        {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Email</label>
+        {{ form.email }}
+        <div class="form-help">Opcional, útil para notificaciones.</div>
+        {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Estado</label>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <div class="form-check form-switch mb-0">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Activo</label>
+          </div>
+        </div>
+        <div class="form-help">Si está inactivo, no podrá iniciar sesión.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Nombres</label>
+        {{ form.first_name }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Apellidos</label>
+        {{ form.last_name }}
+      </div>
+    </div>
+
+    {% if form.password1 %}
+      <div class="section-divider"></div>
+      <div class="section-title">Seguridad</div>
+      <div class="section-sub">Define una contraseña segura para el usuario.</div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <label class="form-label">Contraseña</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Confirmación</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors }}</div>{% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="section-divider"></div>
+    <div class="section-title">Roles</div>
+    <div class="section-sub">Controlan a qué módulos puede acceder el usuario.</div>
+    <div class="row g-3 mt-1">
+      <div class="col-12">
+        {{ form.roles }}
+        {% if form.roles.help_text %}<div class="form-text">{{ form.roles.help_text }}</div>{% endif %}
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+

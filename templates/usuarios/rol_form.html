@@ -1,0 +1,78 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}{% if object %}Editar rol{% else %}Nuevo rol{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-1">{% if object %}Editar rol{% else %}Nuevo rol{% endif %}</h1>
+    <div class="text-muted">Usa un código corto (ej: <code>admin</code>, <code>caja</code>).</div>
+  </div>
+  <a href="{% url 'usuarios:rol_list' %}" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="card lf-card">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombre</label>
+          {{ form.nombre }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Código</label>
+          {{ form.codigo }}
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descripción</label>
+          {{ form.descripcion }}
+        </div>
+        <div class="col-12">
+          <div class="form-check mt-2">
+            {{ form.activo }}
+            <label class="form-check-label" for="{{ form.activo.id_for_label }}">Activo</label>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <h2 class="h6 mb-1">Permisos del rol</h2>
+          <div class="text-muted small">Selecciona qué puede ver/hacer este rol por módulo.</div>
+        </div>
+        <div class="text-muted small">Código recomendado para acceso total: <code>admin</code></div>
+      </div>
+
+      <div class="row g-3 mt-1">
+        {% for group_name, items in form.permisos_grouped.items %}
+          <div class="col-lg-6">
+            <div class="p-3 rounded-3" style="border: 1px solid var(--lf-border); background: rgba(15,23,42,.02);">
+              <div class="fw-semibold mb-2">{{ group_name }}</div>
+              <div class="d-grid gap-2">
+                {% for p in items %}
+                  <label class="d-flex align-items-start gap-2">
+                    <input type="checkbox" name="permisos" value="{{ p.code }}"
+                           class="form-check-input mt-1"
+                           {% if p.code in form.permisos.value %}checked{% endif %}>
+                    <span>
+                      <span class="fw-semibold">{{ p.label }}</span>
+                      <span class="text-muted small d-block">{{ p.code }}</span>
+                    </span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+        <a class="btn btn-outline-secondary" href="{% url 'usuarios:rol_list' %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

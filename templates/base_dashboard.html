@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+{% load roles %}
+{% block title %}{% block page_title %}LatinForce{% endblock %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root{
+        --lf-bg: #f6f7fb;
+        --lf-card: #ffffff;
+        --lf-border: rgba(17, 24, 39, .08);
+        --lf-shadow: 0 10px 30px rgba(17,24,39,.06);
+        --lf-shadow-sm: 0 6px 18px rgba(17,24,39,.08);
+        --lf-radius: 16px;
+        --lf-radius-sm: 12px;
+        --lf-accent: #2563eb; /* azul */
+        --lf-accent-soft: rgba(37, 99, 235, .12);
+        --lf-text: #0f172a;
+        --lf-muted: #64748b;
+        --lf-sidebar: #0b1220;
+        --lf-sidebar-2: #0f1a2f;
+    }
+
+    body { background: var(--lf-bg); color: var(--lf-text); }
+
+    /* Layout */
+    .lf-layout { min-height: 100vh; }
+    .lf-main { background: var(--lf-bg); }
+
+    /* Sidebar */
+    .lf-sidebar{
+        width: 252px;
+        background: linear-gradient(180deg, var(--lf-sidebar) 0%, var(--lf-sidebar-2) 100%);
+        border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .lf-brand{
+        display:flex; align-items:center; gap:.6rem;
+        padding: 16px 18px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        text-decoration:none;
+    }
+    .lf-brand-badge{
+        width: 36px; height: 36px; border-radius: 12px;
+        display:grid; place-items:center;
+        background: rgba(255,193,7,.12);
+        border: 1px solid rgba(255,193,7,.22);
+    }
+    .lf-brand-title{ color:#fff; font-weight:800; letter-spacing:.2px; }
+    .lf-brand-sub{ color: rgba(255,255,255,.55); font-size:.78rem; margin-top:-2px; }
+
+    .lf-nav{ padding: 10px 10px 14px; }
+    .lf-nav .nav-link{
+        display:flex; align-items:center; gap:.65rem;
+        color: rgba(255,255,255,.75);
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin: 2px 0;
+        transition: all .15s ease;
+    }
+    .lf-nav .nav-link i{ width: 20px; text-align:center; opacity:.9; }
+    .lf-nav .nav-link:hover{
+        background: rgba(255,255,255,.06);
+        color:#fff;
+    }
+    .lf-nav .nav-link.active{
+        background: linear-gradient(90deg, var(--lf-accent-soft), rgba(37,99,235,.04));
+        color:#fff;
+        border: 1px solid rgba(37,99,235,.18);
+        box-shadow: inset 3px 0 0 var(--lf-accent);
+    }
+
+    .lf-user{
+        padding: 14px 14px 16px;
+        border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .lf-user-card{
+        display:flex; gap:.75rem; align-items:center;
+        padding: 12px 12px;
+        border-radius: 14px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.08);
+    }
+    .lf-avatar{
+        width: 34px; height: 34px; border-radius: 12px;
+        display:grid; place-items:center;
+        background: rgba(37,99,235,.14);
+        color:#fff;
+        border: 1px solid rgba(37,99,235,.22);
+        font-weight:800;
+    }
+    .lf-username{ color: rgba(255,255,255,.9); font-weight:700; line-height:1.05; }
+    .lf-role{ color: rgba(255,255,255,.55); font-size:.78rem; }
+    .lf-logout{
+        margin-top: 10px;
+        border-radius: 12px;
+        padding: 9px 12px;
+        border-color: rgba(255,255,255,.18) !important;
+        color: rgba(255,255,255,.85) !important;
+    }
+    .lf-logout:hover{
+        background: rgba(255,255,255,.08) !important;
+        border-color: rgba(255,255,255,.26) !important;
+        color:#fff !important;
+    }
+
+    /* Main container spacing */
+    .lf-container{
+        padding: 28px 28px;
+    }
+    @media (max-width: 992px){
+        .lf-sidebar{ width: 230px; }
+        .lf-container{ padding: 20px 16px; }
+    }
+
+    /* Card defaults */
+    .lf-card{
+        background: var(--lf-card);
+        border: 1px solid var(--lf-border);
+        border-radius: var(--lf-radius);
+        box-shadow: var(--lf-shadow-sm);
+    }
+    .lf-card .card-header{
+        background: transparent;
+        border-bottom: 1px solid var(--lf-border);
+        padding: 14px 16px;
+    }
+    .lf-card .card-body{ padding: 16px; }
+
+    /* Buttons */
+    .btn{
+        border-radius: 12px;
+    }
+    .btn-sm{ border-radius: 12px; }
+    .btn-lg{ border-radius: 14px; }
+    .btn:focus{ box-shadow: 0 0 0 .2rem rgba(37,99,235,.15); }
+
+    .btn-primary{
+        background: var(--lf-accent);
+        border-color: var(--lf-accent);
+        box-shadow: 0 8px 18px rgba(37,99,235,.18);
+    }
+    .btn-primary:hover{ filter: brightness(.98); }
+
+    /* Outline buttons: more premium + consistent */
+    .btn-outline-primary{
+        border-color: rgba(37,99,235,.28);
+        color: var(--lf-accent);
+        background: #fff;
+    }
+    .btn-outline-primary:hover{
+        background: rgba(37,99,235,.08);
+        border-color: rgba(37,99,235,.36);
+        color: var(--lf-accent);
+    }
+
+    .btn-outline-secondary{
+        border-color: rgba(100,116,139,.28);
+        color: #334155;
+        background: #fff;
+    }
+    .btn-outline-secondary:hover{
+        background: rgba(100,116,139,.10);
+        border-color: rgba(100,116,139,.36);
+        color: #0f172a;
+    }
+
+    .btn-outline-danger{
+        border-color: rgba(239,68,68,.28);
+        color: #b91c1c;
+        background: #fff;
+    }
+    .btn-outline-danger:hover{
+        background: rgba(239,68,68,.10);
+        border-color: rgba(239,68,68,.36);
+        color: #991b1b;
+    }
+
+    .btn-outline-warning{
+        border-color: rgba(245,158,11,.30);
+        color: #92400e;
+        background: #fff;
+    }
+    .btn-outline-warning:hover{
+        background: rgba(245,158,11,.12);
+        border-color: rgba(245,158,11,.40);
+        color: #78350f;
+    }
+
+    .btn-success{
+        border-radius: 12px;
+        box-shadow: 0 8px 18px rgba(16,185,129,.14);
+    }
+
+    /* Icon buttons feel aligned */
+    .btn i{ vertical-align: -0.12em; }
+
+    /* Forms (global) */
+    .lf-main .form-label{
+        color: var(--lf-muted);
+        font-size: .82rem;
+        margin-bottom: 6px;
+    }
+    .lf-main .form-control,
+    .lf-main .form-select{
+        border-radius: 12px;
+        border-color: rgba(17,24,39,.12);
+        min-height: 42px;
+        padding: 10px 12px;
+        background-color: #fff;
+    }
+    .lf-main .form-control::placeholder{
+        color: rgba(100,116,139,.75);
+    }
+    .lf-main .form-control:focus,
+    .lf-main .form-select:focus{
+        border-color: rgba(37,99,235,.40);
+        box-shadow: 0 0 0 .20rem rgba(37,99,235,.12);
+    }
+    .lf-main .form-control-sm,
+    .lf-main .form-select-sm{
+        min-height: 38px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: .9rem;
+    }
+    .lf-main .input-group-text{
+        border-radius: 12px;
+        border-color: rgba(17,24,39,.12);
+        background: #fff;
+        color: rgba(15,23,42,.70);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    .lf-main .input-group .form-control{
+        border-left: 0;
+    }
+    .lf-main .input-group .input-group-text + .form-control{
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .lf-main .input-group .form-control + .btn{
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    .lf-main .form-text{
+        color: rgba(100,116,139,.9);
+    }
+
+    /* Tables (global) */
+    .lf-table-wrap{
+        background: var(--lf-card);
+        border: 1px solid var(--lf-border);
+        border-radius: var(--lf-radius);
+        box-shadow: var(--lf-shadow-sm);
+        overflow: hidden;
+    }
+    .lf-table{
+        margin-bottom: 0;
+    }
+    .lf-table thead th{
+        background: rgba(15,23,42,.02);
+        color: var(--lf-muted);
+        font-size: .78rem;
+        letter-spacing: .02em;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--lf-border);
+        white-space: nowrap;
+    }
+    .lf-table tbody td{
+        padding: 14px 16px;
+        border-top: 1px solid rgba(17,24,39,.06);
+        vertical-align: middle;
+    }
+    .lf-table.table-hover tbody tr:hover > *{
+        background: rgba(37,99,235,.03);
+    }
+    .lf-table a{ text-decoration: none; }
+    .lf-table a:hover{ text-decoration: underline; }
+
+    /* Soft badges (reusable) */
+    .badge-soft{
+        background: rgba(15,23,42,.06);
+        color: #0f172a;
+        border: 1px solid rgba(15,23,42,.10);
+        font-weight: 700;
+        border-radius: 999px;
+        padding: .35rem .55rem;
+        font-size: .74rem;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+    .badge-soft.success{ background: rgba(16,185,129,.10); border-color: rgba(16,185,129,.18); color: #065f46; }
+    .badge-soft.warning{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.22); color: #92400e; }
+    .badge-soft.danger{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.20); color: #991b1b; }
+    .badge-soft.info{ background: rgba(59,130,246,.10); border-color: rgba(59,130,246,.18); color: #1d4ed8; }
+    .badge-soft.neutral{ background: rgba(148,163,184,.16); border-color: rgba(148,163,184,.24); color: #334155; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex lf-layout">
+    <aside class="lf-sidebar flex-shrink-0">
+        <a class="lf-brand" href="{% url 'dashboard:index' %}">
+            <div class="lf-brand-badge">
+                <i class="bi bi-lightning-charge-fill text-warning"></i>
+            </div>
+            <div>
+                <div class="lf-brand-title">LatinForce</div>
+                <div class="lf-brand-sub">Panel administrativo</div>
+            </div>
+        </a>
+        <div class="lf-nav">
+            <ul class="navbar-nav flex-column">
+                    {% has_perm "dashboard.view" as can_dashboard %}
+                    {% if can_dashboard %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+                            <i class="bi bi-grid-1x2 me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        {% has_perm "clientes.view" as can_clientes %}
+                        {% if can_clientes %}
+                        <a class="nav-link {% if '/clientes' in request.path %}active{% endif %}" href="{% url 'clientes:list' %}">
+                            <i class="bi bi-people me-2"></i>Clientes
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "planes.view" as can_planes %}
+                        {% if can_planes %}
+                        <a class="nav-link {% if '/planes' in request.path %}active{% endif %}" href="{% url 'planes:list' %}">
+                            <i class="bi bi-card-list me-2"></i>Planes
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "pagos.view" as can_pagos %}
+                        {% if can_pagos %}
+                        <a class="nav-link {% if '/pagos' in request.path and 'deudas' not in request.path and 'reportes' not in request.path %}active{% endif %}" href="{% url 'pagos:list' %}">
+                            <i class="bi bi-cash me-2"></i>Pagos
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "deudas.view" as can_deudas %}
+                        {% if can_deudas %}
+                        <a class="nav-link {% if 'deudas' in request.path %}active{% endif %}" href="{% url 'pagos:deuda_list' %}">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Deudas
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "reportes.view" as can_reportes %}
+                        {% if can_reportes %}
+                        <a class="nav-link {% if 'reportes' in request.path %}active{% endif %}" href="{% url 'pagos:reportes' %}">
+                            <i class="bi bi-graph-up me-2"></i>Reportes
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "inventario.view" as can_inv %}
+                        {% if can_inv %}
+                        <a class="nav-link {% if '/inventario' in request.path %}active{% endif %}" href="{% url 'inventario:list' %}">
+                            <i class="bi bi-box-seam me-2"></i>Inventario
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "trabajadores.view" as can_trab %}
+                        {% if can_trab %}
+                        <a class="nav-link {% if '/trabajadores' in request.path %}active{% endif %}" href="{% url 'trabajadores:list' %}">
+                            <i class="bi bi-person-workspace me-2"></i>Trabajadores
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "ventas.view" as can_ventas %}
+                        {% if can_ventas %}
+                        <a class="nav-link {% if '/ventas' in request.path %}active{% endif %}" href="{% url 'ventas:list' %}">
+                            <i class="bi bi-cart-check me-2"></i>Ventas
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item mt-2">
+                        <div class="text-uppercase small px-2" style="color: rgba(255,255,255,.45); letter-spacing:.08em;">
+                            Seguridad
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "seguridad.usuarios" as can_sec_users %}
+                        {% if can_sec_users %}
+                        <a class="nav-link {% if '/usuarios/usuarios' in request.path %}active{% endif %}" href="{% url 'usuarios:usuario_list' %}">
+                            <i class="bi bi-person-badge me-2"></i>Usuarios
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        {% has_perm "seguridad.roles" as can_sec_roles %}
+                        {% if can_sec_roles %}
+                        <a class="nav-link {% if '/usuarios/roles' in request.path %}active{% endif %}" href="{% url 'usuarios:rol_list' %}">
+                            <i class="bi bi-shield-lock me-2"></i>Roles
+                        </a>
+                        {% endif %}
+                    </li>
+            </ul>
+        </div>
+        <div class="lf-user mt-auto">
+            <div class="lf-user-card">
+                <div class="lf-avatar">{{ user.get_username|default:"U"|slice:":1"|upper }}</div>
+                <div class="flex-grow-1">
+                    <div class="lf-username">{{ user.get_username }}</div>
+                    <div class="lf-role">Sesión activa</div>
+                </div>
+            </div>
+            <a href="{% url 'usuarios:logout' %}" class="btn btn-outline-secondary btn-sm w-100 lf-logout">
+                <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-grow-1 overflow-auto lf-main">
+        <div class="lf-container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}

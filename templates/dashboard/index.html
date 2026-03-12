@@ -1,0 +1,239 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    .dash-title { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+    .dash-sub { color:#6c757d; font-size:.9rem; }
+    .quick-actions .btn { white-space:nowrap; }
+    .kpi .label { color:#6c757d; font-size:.8rem; margin-bottom:.15rem; }
+    .kpi .value { font-size:1.35rem; font-weight:800; margin:0; }
+    .kpi .hint { color:#6c757d; font-size:.8rem; }
+    .activity-item small { color:#6c757d; }
+</style>
+
+<div class="dash-title mb-3">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <div class="dash-sub">Un vistazo rápido a ingresos, ventas y tareas pendientes.</div>
+    </div>
+    <div class="quick-actions d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" href="{% url 'ventas:create' %}"><i class="bi bi-plus-lg me-1"></i>Nueva venta</a>
+        <a class="btn btn-outline-primary" href="{% url 'pagos:create' %}"><i class="bi bi-cash me-1"></i>Nuevo pago</a>
+        <a class="btn btn-outline-secondary" href="{% url 'clientes:list' %}"><i class="bi bi-people me-1"></i>Clientes</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded p-2">
+                        <i class="bi bi-people text-primary fs-4"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="kpi">
+                            <div class="label">Clientes activos</div>
+                            <p class="value">{{ total_clientes_activos }}</p>
+                            <div class="hint">Base del gimnasio</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'clientes:list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-success bg-opacity-10 rounded p-2">
+                        <i class="bi bi-card-list text-success fs-4"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="kpi">
+                            <div class="label">Planes activos</div>
+                            <p class="value">{{ total_planes_activos }}</p>
+                            <div class="hint">Ofertas vigentes</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'planes:list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-info bg-opacity-10 rounded p-2">
+                        <i class="bi bi-cash-stack text-info fs-4"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="kpi">
+                            <div class="label">Pagos hoy</div>
+                            <p class="value">S/ {{ total_ingresos_hoy|floatformat:2 }}</p>
+                            <div class="hint">{{ pagos_hoy }} pago{{ pagos_hoy|pluralize }} · Mes: S/ {{ total_ingresos_mes|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'pagos:list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded p-2">
+                        <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                    </div>
+                    <div class="ms-3">
+                        <div class="kpi">
+                            <div class="label">Deudas pendientes</div>
+                            <p class="value">S/ {{ total_deudas_pendientes|floatformat:2 }}</p>
+                            <div class="hint">{{ cantidad_deudas }} cuenta{{ cantidad_deudas|pluralize }}</div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'pagos:deuda_list' %}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Ventas</h6>
+                <a href="{% url 'ventas:list' %}" class="btn btn-sm btn-outline-primary">Ver ventas</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="kpi">
+                            <div class="label">Hoy</div>
+                            <p class="value">S/ {{ total_ventas_hoy|floatformat:2 }}</p>
+                            <div class="hint">{{ ventas_hoy }} venta{{ ventas_hoy|pluralize }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="kpi">
+                            <div class="label">Este mes</div>
+                            <p class="value">S/ {{ total_ventas_mes|floatformat:2 }}</p>
+                            <div class="hint">{{ total_ventas_count }} emitida{{ total_ventas_count|pluralize }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Actividad reciente</h6>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'pagos:list' %}" class="btn btn-sm btn-outline-secondary">Pagos</a>
+                    <a href="{% url 'ventas:list' %}" class="btn btn-sm btn-outline-secondary">Ventas</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for v in ultimas_ventas %}
+                        <div class="list-group-item activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-semibold">{{ v.serie }}-{{ v.numero_comprobante }} <span class="text-muted small">{{ v.get_tipo_comprobante_display }}</span></div>
+                                <div class="fw-bold">S/ {{ v.total }}</div>
+                            </div>
+                            <small>{{ v.fecha_emision|date:"d/m/Y" }} · {{ v.cliente.nombre_completo|default:"—" }}</small>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-muted">Aún no hay ventas.</div>
+                    {% endfor %}
+                    {% for p in ultimos_pagos %}
+                        <div class="list-group-item activity-item">
+                            <div class="d-flex justify-content-between">
+                                <div class="fw-semibold">{{ p.numero_comprobante|default:"Pago" }} <span class="text-muted small">{{ p.get_metodo_pago_display }}</span></div>
+                                <div class="fw-bold">S/ {{ p.monto }}</div>
+                            </div>
+                            <small>{{ p.fecha_pago|date:"d/m/Y" }} · {{ p.cliente.nombre_completo }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Próximos a vencer</h6>
+                <a href="{% url 'pagos:list' %}" class="btn btn-sm btn-outline-primary">Ver pagos</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in proximos_vencer %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'clientes:detail' item.cliente.pk %}">{{ item.cliente.nombre_completo }}</a>
+                            <br><small class="text-muted">{{ item.plan.nombre }} - vence {{ item.fecha|date:"d/m/Y" }}</small>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            {% if item.whatsapp_url %}
+                            <a href="{{ item.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success" title="Enviar WhatsApp">
+                                <i class="bi bi-whatsapp"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'pagos:create' %}?cliente={{ item.cliente.pk }}&plan={{ item.plan.pk }}" class="btn btn-outline-success">Renovar</a>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Ningún plan próximo a vencer</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Próximos a cumplir años</h6>
+                <a href="{% url 'clientes:list' %}" class="btn btn-sm btn-outline-primary">Ver clientes</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in proximos_cumple_anos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% url 'clientes:detail' item.cliente.pk %}">{{ item.cliente.nombre_completo }}</a>
+                            <br><small class="text-muted"><i class="bi bi-gift text-danger"></i> {{ item.fecha_cumple|date:"d/m/Y" }}</small>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Ningún cumpleaños en los próximos 30 días (añade fecha de nacimiento en los clientes).</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Bienvenido</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">Hola, <strong>{{ user.get_username }}</strong>. Aquí tienes lo más importante del día.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'ventas:create' %}"><i class="bi bi-cart-plus me-1"></i>Registrar venta</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'pagos:create' %}"><i class="bi bi-cash me-1"></i>Registrar pago</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'pagos:reportes' %}"><i class="bi bi-graph-up me-1"></i>Reportes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

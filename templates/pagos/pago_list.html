@@ -1,0 +1,118 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Pagos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Pagos</h1>
+    <div class="btn-group">
+        <a href="{% url 'pagos:reportes' %}" class="btn btn-outline-primary">
+            <i class="bi bi-graph-up me-1"></i>Reportes
+        </a>
+        <a href="{% url 'pagos:deuda_list' %}" class="btn btn-outline-warning">
+            <i class="bi bi-exclamation-triangle me-1"></i>Deudas pendientes
+        </a>
+        <a href="{% url 'pagos:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Registrar pago
+        </a>
+    </div>
+</div>
+
+<form method="get" class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small">Desde</label>
+                <input type="date" name="fecha_desde" value="{{ request.GET.fecha_desde }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ request.GET.fecha_hasta }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Cliente</label>
+                <select name="cliente" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.pk }}" {% if request.GET.cliente == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.nombre_completo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Método</label>
+                <select name="metodo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="efectivo" {% if request.GET.metodo == 'efectivo' %}selected{% endif %}>Efectivo</option>
+                    <option value="yape" {% if request.GET.metodo == 'yape' %}selected{% endif %}>Yape</option>
+                    <option value="transferencia" {% if request.GET.metodo == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                    <option value="tarjeta" {% if request.GET.metodo == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="lf-table-wrap">
+    <div class="table-responsive">
+            <table class="table table-hover align-middle lf-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Plan</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                        <th>Concepto</th>
+                        <th>Comprobante</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pagos %}
+                    <tr>
+                        <td>{{ p.fecha_pago|date:"d/m/Y" }}</td>
+                        <td><a href="{% url 'clientes:detail' p.cliente.pk %}">{{ p.cliente.nombre_completo }}</a></td>
+                        <td>{{ p.plan.nombre|default:"—" }}</td>
+                        <td class="fw-medium">S/ {{ p.monto }}</td>
+                        <td>
+                            {% if p.metodo_pago == 'efectivo' %}<span class="badge-soft success">Efectivo</span>
+                            {% elif p.metodo_pago == 'yape' %}<span class="badge-soft info">Yape</span>
+                            {% elif p.metodo_pago == 'transferencia' %}<span class="badge-soft info">Transferencia</span>
+                            {% else %}<span class="badge-soft neutral">Tarjeta</span>{% endif %}
+                        </td>
+                        <td>{{ p.concepto|truncatewords:4 }}</td>
+                        <td>{{ p.numero_comprobante|default:"—" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'pagos:comprobante' p.pk %}" class="btn btn-sm btn-outline-primary" target="_blank" title="Comprobante">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                            <a href="{% url 'pagos:update' p.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No hay pagos registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if is_paginated %}
+        <nav class="p-3 border-top">
+            <ul class="pagination pagination-sm mb-0 justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}">Siguiente</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+</div>
+{% endblock %}

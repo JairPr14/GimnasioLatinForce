@@ -5,7 +5,11 @@ Configuración del proyecto LatinForce - Sistema de Gestión de Gimnasio.
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        return False
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent

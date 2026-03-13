@@ -1,10 +1,11 @@
 import json
 from io import BytesIO
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from usuarios.permissions import RolePermissionRequiredMixin, user_has_perm
 from django.http import FileResponse, Http404
+from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -12,11 +13,15 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, ListView, TemplateView
 
+from django.contrib.auth import get_user_model
+
 from inventario.models import Producto
 from core.ticket_pdf import TicketPDF, estimate_height, mm_to_pt
 from core.numero_a_letras import monto_soles_en_letras
 from .forms import VentaForm
 from .models import Venta, VentaDetalle
+
+User = get_user_model()
 
 
 class VentaListView(RolePermissionRequiredMixin, ListView):
@@ -76,6 +81,141 @@ class VentaListView(RolePermissionRequiredMixin, ListView):
         return ctx
 
 
+class ReporteVentasView(RolePermissionRequiredMixin, TemplateView):
+    """Reporte detallado de ventas con filtros avanzados."""
+    template_name = 'ventas/reporte_ventas.html'
+    required_perms = ["ventas.view"]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        hoy = timezone.localdate()
+        inicio_mes = hoy.replace(day=1)
+
+        q = (self.request.GET.get('q') or '').strip()
+        tipo = (self.request.GET.get('tipo') or '').strip()
+        estado = (self.request.GET.get('estado') or '').strip()
+        operacion = (self.request.GET.get('operacion') or '').strip()
+        cliente_id = (self.request.GET.get('cliente') or '').strip()
+        usuario_id = (self.request.GET.get('usuario') or '').strip()
+        desde = self.request.GET.get('desde') or inicio_mes.isoformat()
+        hasta = self.request.GET.get('hasta') or hoy.isoformat()
+
+        try:
+            fecha_desde = timezone.datetime.strptime(desde, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            fecha_desde = inicio_mes
+        try:
+            fecha_hasta = timezone.datetime.strptime(hasta, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            fecha_hasta = hoy
+
+        qs = (
+            Venta.objects
+            .select_related('cliente', 'usuario')
+            .prefetch_related('detalles__producto')
+            .filter(
+                fecha_emision__gte=fecha_desde,
+                fecha_emision__lte=fecha_hasta,
+            )
+            .order_by('-fecha_emision', '-id')
+        )
+
+        if q:
+            qs = qs.filter(
+                Q(serie__icontains=q)
+                | Q(numero_comprobante__icontains=q)
+                | Q(cliente__nombres__icontains=q)
+                | Q(cliente__apellidos__icontains=q)
+                | Q(cliente__dni__icontains=q)
+            )
+        if tipo:
+            qs = qs.filter(tipo_comprobante=tipo)
+        if estado:
+            qs = qs.filter(estado=estado)
+        if operacion:
+            qs = qs.filter(tipo_operacion=operacion)
+        if cliente_id:
+            qs = qs.filter(cliente_id=cliente_id)
+        if usuario_id:
+            qs = qs.filter(usuario_id=usuario_id)
+
+        # KPIs del periodo filtrado
+        aggr = qs.aggregate(
+            total_ventas=Sum('total'),
+            total_comprobantes=Count('id'),
+            subtotal_sum=Sum('subtotal'),
+        )
+        ctx['total_ventas'] = aggr['total_ventas'] or Decimal('0')
+        ctx['total_comprobantes'] = aggr['total_comprobantes'] or 0
+        ctx['subtotal_sum'] = aggr['subtotal_sum'] or Decimal('0')
+
+        # Desglose por tipo de comprobante
+        por_tipo = list(
+            qs.values('tipo_comprobante')
+            .annotate(total=Sum('total'), cantidad=Count('id'))
+            .order_by('-total')
+        )
+        ctx['resumen_por_tipo'] = [
+            {
+                'tipo': dict(Venta.TIPO_COMPROBANTE).get(r['tipo_comprobante'], r['tipo_comprobante']),
+                'total': r['total'] or Decimal('0'),
+                'cantidad': r['cantidad'],
+            }
+            for r in por_tipo
+        ]
+
+        # Desglose por vendedor
+        por_usuario = list(
+            qs.values('usuario__username')
+            .annotate(total=Sum('total'), cantidad=Count('id'))
+            .order_by('-total')
+        )
+        ctx['resumen_por_vendedor'] = [
+            {
+                'usuario': r['usuario__username'] or 'Sin asignar',
+                'total': r['total'] or Decimal('0'),
+                'cantidad': r['cantidad'],
+            }
+            for r in por_usuario
+        ]
+
+        # Desglose por estado
+        por_estado = list(
+            qs.values('estado')
+            .annotate(total=Sum('total'), cantidad=Count('id'))
+            .order_by('-total')
+        )
+        estados_dict = dict([('emitido', 'Emitido'), ('anulado', 'Anulado'), ('borrador', 'Borrador')])
+        ctx['resumen_por_estado'] = [
+            {
+                'estado': estados_dict.get(r['estado'], r['estado'] or '—'),
+                'total': r['total'] or Decimal('0'),
+                'cantidad': r['cantidad'],
+            }
+            for r in por_estado
+        ]
+
+        from clientes.models import Cliente
+
+        ctx['ventas'] = qs[:500]
+        ctx['tipos'] = Venta.TIPO_COMPROBANTE
+        ctx['tipos_operacion'] = Venta.TIPO_OPERACION
+        ctx['clientes_lista'] = Cliente.objects.filter(estado__in=('activo', 'suspendido')).order_by('apellidos', 'nombres')[:200]
+        ctx['usuarios_lista'] = User.objects.filter(is_active=True).order_by('username')
+
+        ctx['f_q'] = q
+        ctx['f_tipo'] = tipo
+        ctx['f_estado'] = estado
+        ctx['f_operacion'] = operacion
+        ctx['f_cliente'] = cliente_id
+        ctx['f_usuario'] = usuario_id
+        ctx['f_desde'] = desde
+        ctx['f_hasta'] = hasta
+        ctx['fecha_desde'] = fecha_desde
+        ctx['fecha_hasta'] = fecha_hasta
+        return ctx
+
+
 class VentaCreateView(RolePermissionRequiredMixin, CreateView):
     model = Venta
     form_class = VentaForm
@@ -85,52 +225,91 @@ class VentaCreateView(RolePermissionRequiredMixin, CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        initial['fecha_emision'] = timezone.now().date()
+        initial['fecha_emision'] = timezone.localdate()
         initial['serie'] = 'BB01'
         return initial
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        if self.request.method == 'POST':
+            ctx['items_json_initial'] = self.request.POST.get('items_json', '[]')
+        else:
+            ctx['items_json_initial'] = '[]'
+        return ctx
+
+    def _build_items(self, form):
+        try:
+            raw_items = json.loads(self.request.POST.get('items_json', '[]'))
+        except json.JSONDecodeError:
+            form.add_error(None, 'No se pudo leer el detalle de la venta.')
+            return None
+
+        if not isinstance(raw_items, list):
+            form.add_error(None, 'No se pudo leer el detalle de la venta.')
+            return None
+
+        items = []
+        for raw_item in raw_items:
+            try:
+                producto_id = int(raw_item.get('producto_id'))
+                cantidad = Decimal(str(raw_item.get('cantidad', 0)))
+                precio = Decimal(str(raw_item.get('precio', 0)))
+            except (TypeError, ValueError, InvalidOperation):
+                form.add_error(None, 'Hay productos con datos inválidos en el detalle.')
+                return None
+
+            if cantidad <= 0:
+                continue
+            if precio < 0:
+                form.add_error(None, 'El precio unitario no puede ser negativo.')
+                return None
+            if cantidad != cantidad.to_integral_value():
+                form.add_error(None, 'La cantidad de los productos debe ser un número entero.')
+                return None
+
+            producto = Producto.objects.filter(pk=producto_id, activo=True).first()
+            if not producto:
+                form.add_error(None, 'Uno de los productos seleccionados ya no está disponible.')
+                return None
+            if producto.stock < int(cantidad) and not producto.permitir_vender_sin_stock:
+                form.add_error(
+                    None,
+                    f'Stock insuficiente de "{producto.nombre}". Hay {producto.stock} {producto.unidad}.',
+                )
+                return None
+            items.append((producto, int(cantidad), precio))
+
+        if not items:
+            form.add_error(None, 'Agrega al menos un producto válido a la venta.')
+            return None
+        return items
+
     def form_valid(self, form):
+        items = self._build_items(form)
+        if items is None:
+            return self.form_invalid(form)
+
         form.instance.usuario = self.request.user
         form.instance.estado = 'emitido'
         # Número de comprobante
         ultimo = Venta.objects.filter(serie=form.instance.serie).order_by('-id').first()
         n = (ultimo.id + 1) if ultimo else 1
         form.instance.numero_comprobante = f"{n:06d}"
-        self.object = form.save()
 
-        # Detalles desde JSON
-        items_json = self.request.POST.get('items_json', '[]')
-        try:
-            items = json.loads(items_json)
-        except json.JSONDecodeError:
-            items = []
-
-        for it in items:
-            producto_id = it.get('producto_id')
-            cantidad = Decimal(str(it.get('cantidad', 0)))
-            precio = Decimal(str(it.get('precio', 0)))
-            if not producto_id or cantidad <= 0:
-                continue
-            producto = get_object_or_404(Producto, pk=producto_id, activo=True)
-            permitir_sin_stock = bool(producto.permitir_vender_sin_stock)
-            if producto.stock < int(cantidad) and not permitir_sin_stock:
-                messages.warning(
-                    self.request,
-                    f'Stock insuficiente de "{producto.nombre}". Hay {producto.stock} {producto.unidad}.'
+        with transaction.atomic():
+            self.object = form.save()
+            for producto, cantidad, precio in items:
+                VentaDetalle.objects.create(
+                    venta=self.object,
+                    producto=producto,
+                    cantidad=cantidad,
+                    precio_unitario=precio,
                 )
-                continue
-            VentaDetalle.objects.create(
-                venta=self.object,
-                producto=producto,
-                cantidad=cantidad,
-                precio_unitario=precio,
-            )
-            # Descontar stock
-            if permitir_sin_stock:
-                producto.stock = max(0, producto.stock - int(cantidad))
-            else:
-                producto.stock -= int(cantidad)
-            producto.save(update_fields=['stock'])
+                if producto.permitir_vender_sin_stock:
+                    producto.stock = max(0, producto.stock - cantidad)
+                else:
+                    producto.stock -= cantidad
+                producto.save(update_fields=['stock'])
         messages.success(self.request, 'Venta procesada correctamente.')
         return redirect(self.get_success_url())
 

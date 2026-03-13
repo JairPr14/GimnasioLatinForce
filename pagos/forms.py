@@ -45,6 +45,23 @@ class PagoForm(forms.ModelForm):
         self.fields['observaciones'].required = False
         self.fields['fecha_pago'].input_formats = ['%Y-%m-%d']
 
+    def clean(self):
+        cleaned_data = super().clean()
+        cliente = cleaned_data.get('cliente')
+        plan = cleaned_data.get('plan')
+        deuda = cleaned_data.get('deuda')
+        monto = cleaned_data.get('monto')
+
+        if monto is not None and monto <= 0:
+            self.add_error('monto', 'El monto debe ser mayor a cero.')
+        if deuda and cliente and deuda.cliente_id != cliente.id:
+            self.add_error('deuda', 'La deuda seleccionada no pertenece al cliente indicado.')
+        if plan and deuda:
+            raise forms.ValidationError('Selecciona un plan o una deuda, pero no ambos a la vez.')
+        if deuda and monto is not None and monto > deuda.monto_pendiente:
+            self.add_error('monto', 'El monto supera la deuda pendiente.')
+        return cleaned_data
+
 
 class DeudaForm(forms.ModelForm):
     """Formulario para registrar deuda."""

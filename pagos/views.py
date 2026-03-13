@@ -70,7 +70,7 @@ class PagoCreateView(RolePermissionRequiredMixin, CreateView):
     def get_initial(self):
         initial = super().get_initial()
         # Fecha de emisión = momento actual (al accionar Renovar o abrir nuevo pago).
-        initial['fecha_pago'] = timezone.now().date()
+        initial['fecha_pago'] = timezone.localdate()
         cliente_id = self.request.GET.get('cliente')
         if cliente_id:
             initial['cliente'] = get_object_or_404(Cliente, pk=cliente_id)
@@ -249,7 +249,7 @@ class ReporteIngresosView(RolePermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
         periodo = self.request.GET.get('periodo', 'diario')
         fecha = self.request.GET.get('fecha', hoy.isoformat())
         try:

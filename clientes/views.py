@@ -58,7 +58,7 @@ class ClienteDetailView(RolePermissionRequiredMixin, DetailView):
         from datetime import timedelta
         from django.utils import timezone
         from pagos.models import Pago
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
         ultimo_pago = Pago.objects.filter(cliente=self.object, plan__isnull=False).select_related('plan').order_by('-fecha_pago').first()
         if ultimo_pago:
             fecha_vencimiento = ultimo_pago.fecha_pago + timedelta(days=ultimo_pago.plan.duracion_dias)
@@ -82,7 +82,7 @@ class ClienteCreateView(RolePermissionRequiredMixin, CreateView):
     def get_initial(self):
         from django.utils import timezone
         initial = super().get_initial()
-        initial['fecha_inscripcion'] = timezone.now().date()
+        initial['fecha_inscripcion'] = timezone.localdate()
         return initial
 
     def form_valid(self, form):
@@ -164,7 +164,14 @@ class AsistenciaRegistrarView(RolePermissionRequiredMixin, View):
                         except Exception as e:
                             messages.error(request, f'Error al registrar: {e}')
                 elif accion == 'registrar_ingreso':
-                    if not cliente_tiene_plan_activo(cliente):
+                    if ultima_asistencia:
+                        messages.error(request, f'{cliente.nombre_completo} ya tiene una jornada abierta.')
+                    elif not puede_registrar_ingreso_hoy(cliente):
+                        messages.error(
+                            request,
+                            f'{cliente.nombre_completo} alcanzó el límite diario de asistencias.',
+                        )
+                    elif not cliente_tiene_plan_activo(cliente):
                         messages.error(request, f'{cliente.nombre_completo} no tiene plan activo. Regístrelo en un plan o como rutina (S/ 5).')
                     else:
                         nueva_asistencia = Asistencia.objects.create(

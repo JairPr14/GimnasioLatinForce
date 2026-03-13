@@ -19,7 +19,7 @@ from ventas.models import Venta
 
 def _get_dashboard_data():
     """Datos del dashboard (sin caché, siempre fresco)."""
-    hoy = timezone.now().date()
+    hoy = timezone.localdate()
     limite = hoy + timedelta(days=15)
     inicio_mes = hoy.replace(day=1)
 
@@ -95,7 +95,7 @@ class DashboardView(RolePermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        hoy = timezone.now().date()
+        hoy = timezone.localdate()
         limite = hoy + timedelta(days=15)
         inicio_mes = hoy.replace(day=1)
 

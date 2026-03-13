@@ -1,0 +1,304 @@
+{% extends "base_dashboard.html" %}
+{% block page_title %}Reporte de ventas{% endblock %}
+
+{% block content %}
+<style>
+    .reporte-ventas .page-title { font-size: 1.55rem; font-weight: 850; letter-spacing: -.3px; margin: 0; }
+    .reporte-ventas .page-sub { color: var(--lf-muted); font-size: .92rem; }
+    .reporte-filters .form-label { font-size: .8rem; color: var(--lf-muted); margin-bottom: 4px; }
+    .reporte-filters .form-control, .reporte-filters .form-select {
+        height: 38px; border-radius: 10px; border-color: rgba(17,24,39,.12);
+    }
+    .kpi-reporte {
+        background: var(--lf-card);
+        border: 1px solid var(--lf-border);
+        border-radius: var(--lf-radius);
+        padding: 16px;
+        box-shadow: var(--lf-shadow-sm);
+    }
+    .kpi-reporte .label { color: var(--lf-muted); font-size: .82rem; }
+    .kpi-reporte .value { font-size: 1.35rem; font-weight: 800; margin-top: 4px; }
+    .resumen-card {
+        background: var(--lf-card);
+        border: 1px solid var(--lf-border);
+        border-radius: var(--lf-radius);
+        overflow: hidden;
+        box-shadow: var(--lf-shadow-sm);
+    }
+    .resumen-card .card-header {
+        background: rgba(15,23,42,.03);
+        padding: 12px 16px;
+        font-weight: 700;
+        font-size: .9rem;
+        border-bottom: 1px solid var(--lf-border);
+    }
+    .resumen-card .table { margin: 0; font-size: .9rem; }
+    .resumen-card .table th { font-size: .75rem; color: var(--lf-muted); }
+    .reporte-table thead th {
+        font-size: .78rem;
+        color: var(--lf-muted);
+        padding: 12px 14px;
+        background: rgba(15,23,42,.02);
+        border-bottom: 1px solid var(--lf-border);
+    }
+    .reporte-table tbody td { padding: 12px 14px; vertical-align: middle; }
+    .badge-tipo { font-size: .72rem; border-radius: 8px; padding: .25rem .5rem; }
+</style>
+
+<div class="reporte-ventas">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-4">
+        <div>
+            <h1 class="page-title">Reporte de ventas</h1>
+            <div class="page-sub">Análisis detallado con filtros por fecha, tipo, cliente, vendedor y más.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'ventas:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Volver a ventas
+            </a>
+        </div>
+    </div>
+
+    <form method="get" class="card lf-card mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-1"></i>Filtros</h6>
+            <div class="row g-3 reporte-filters">
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Fecha desde</label>
+                    <input type="date" class="form-control" name="desde" value="{{ f_desde }}">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Fecha hasta</label>
+                    <input type="date" class="form-control" name="hasta" value="{{ f_hasta }}">
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Tipo comprobante</label>
+                    <select class="form-select" name="tipo">
+                        <option value="">Todos</option>
+                        {% for value, label in tipos %}
+                            <option value="{{ value }}" {% if f_tipo == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" name="estado">
+                        <option value="">Todos</option>
+                        <option value="emitido" {% if f_estado == 'emitido' %}selected{% endif %}>Emitido</option>
+                        <option value="anulado" {% if f_estado == 'anulado' %}selected{% endif %}>Anulado</option>
+                        <option value="borrador" {% if f_estado == 'borrador' %}selected{% endif %}>Borrador</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Tipo operación</label>
+                    <select class="form-select" name="operacion">
+                        <option value="">Todos</option>
+                        {% for value, label in tipos_operacion %}
+                            <option value="{{ value }}" {% if f_operacion == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label">Vendedor</label>
+                    <select class="form-select" name="usuario">
+                        <option value="">Todos</option>
+                        {% for u in usuarios_lista %}
+                            <option value="{{ u.pk }}" {% if f_usuario == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">Cliente</label>
+                    <select class="form-select" name="cliente">
+                        <option value="">Todos</option>
+                        {% for c in clientes_lista %}
+                            <option value="{{ c.pk }}" {% if f_cliente == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.apellidos }} {{ c.nombres }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label">Buscar (serie, número, DNI, cliente)</label>
+                    <input type="text" class="form-control" name="q" value="{{ f_q }}" placeholder="Texto libre">
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-1"></i>Generar reporte
+                    </button>
+                    <a href="{% url 'ventas:reporte' %}" class="btn btn-outline-secondary">Limpiar filtros</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="kpi-reporte">
+                <div class="label">Total ventas (periodo)</div>
+                <div class="value text-primary">S/ {{ total_ventas|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-reporte">
+                <div class="label">Comprobantes</div>
+                <div class="value">{{ total_comprobantes }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="kpi-reporte">
+                <div class="label">Subtotal</div>
+                <div class="value">S/ {{ subtotal_sum|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="resumen-card">
+                <div class="card-header">Por tipo de comprobante</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th class="text-end">Cant.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resumen_por_tipo %}
+                            <tr>
+                                <td>{{ r.tipo }}</td>
+                                <td class="text-end">{{ r.cantidad }}</td>
+                                <td class="text-end fw-semibold">S/ {{ r.total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">Sin datos</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="resumen-card">
+                <div class="card-header">Por vendedor</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th class="text-end">Cant.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resumen_por_vendedor %}
+                            <tr>
+                                <td>{{ r.usuario }}</td>
+                                <td class="text-end">{{ r.cantidad }}</td>
+                                <td class="text-end fw-semibold">S/ {{ r.total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">Sin datos</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="resumen-card">
+                <div class="card-header">Por estado</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th class="text-end">Cant.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resumen_por_estado %}
+                            <tr>
+                                <td>{{ r.estado }}</td>
+                                <td class="text-end">{{ r.cantidad }}</td>
+                                <td class="text-end fw-semibold">S/ {{ r.total|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">Sin datos</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card lf-card">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background: rgba(15,23,42,.03); padding: 14px 18px; border-bottom: 1px solid var(--lf-border);">
+            <h6 class="mb-0 fw-bold">Detalle de ventas ({{ fecha_desde|date:"d/m/Y" }} — {{ fecha_hasta|date:"d/m/Y" }})</h6>
+            <span class="text-muted small">Máx. 500 registros</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 reporte-table">
+                <thead>
+                    <tr>
+                        <th>Comprobante</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Vendedor</th>
+                        <th class="text-end">Subtotal</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in ventas %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ v.serie }}-{{ v.numero_comprobante }}</div>
+                        </td>
+                        <td>{{ v.fecha_emision|date:"d/m/Y" }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ v.cliente.nombre_completo|default:"—" }}</div>
+                            <div class="text-muted small">{{ v.cliente.dni|default:"" }}</div>
+                        </td>
+                        <td>
+                            <span class="badge-tipo badge bg-secondary">{{ v.get_tipo_comprobante_display }}</span>
+                        </td>
+                        <td>
+                            {% if v.estado == 'emitido' %}
+                                <span class="badge bg-success">Emitido</span>
+                            {% elif v.estado == 'anulado' %}
+                                <span class="badge bg-danger">Anulado</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Borrador</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ v.usuario.username|default:"—" }}</td>
+                        <td class="text-end">S/ {{ v.subtotal|floatformat:2 }}</td>
+                        <td class="text-end fw-bold">S/ {{ v.total|floatformat:2 }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'ventas:detail' v.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'ventas:comprobante' v.pk %}" class="btn btn-sm btn-outline-primary" target="_blank" title="Comprobante">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-5">
+                            No hay ventas en el periodo seleccionado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

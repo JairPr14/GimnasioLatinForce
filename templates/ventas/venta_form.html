@@ -15,7 +15,19 @@
 
 <form method="post" id="ventaForm">
     {% csrf_token %}
-    <input type="hidden" name="items_json" id="itemsJson" value="[]">
+    {% if form.errors %}
+    <div class="alert alert-danger">
+        {% for error in form.non_field_errors %}
+        <div>{{ error }}</div>
+        {% endfor %}
+        {% for field in form %}
+            {% for error in field.errors %}
+            <div>{{ field.label }}: {{ error }}</div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    <input type="hidden" name="items_json" id="itemsJson" value="{{ items_json_initial|default:'[]'|escape }}">
 
     <style>
         .busqueda-panel { position: relative; }
@@ -149,10 +161,18 @@
 
 <script>
 (function() {
+    const itemsJson = document.getElementById('itemsJson');
     const items = [];
+    try {
+        const initialItems = JSON.parse(itemsJson.value || '[]');
+        if (Array.isArray(initialItems)) {
+            items.push(...initialItems);
+        }
+    } catch (error) {
+        itemsJson.value = '[]';
+    }
     const cuerpoDetalle = document.getElementById('cuerpoDetalle');
     const emptyDetalle = document.getElementById('emptyDetalle');
-    const itemsJson = document.getElementById('itemsJson');
     const totalVenta = document.getElementById('totalVenta');
     const buscarProducto = document.getElementById('buscarProducto');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
